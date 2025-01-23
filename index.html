@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#1a1f2e" />
     <title>TRUMP DOGE - Make Crypto Great Again!</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,6 +20,7 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
       }
       
       body {
@@ -27,18 +29,63 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         background-color: #1a1f2e;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+      }
+
+      html {
+        height: -webkit-fill-available;
+      }
+
+      #root {
+        padding: 16px;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      button {
+        touch-action: manipulation;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+        user-select: none;
       }
 
       button:hover {
         transform: translateY(-2px);
       }
 
+      @media (hover: none) {
+        button:hover {
+          transform: none;
+        }
+      }
+
       button:active {
         transform: translateY(0);
       }
 
+      input {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        font-size: 16px !important;
+      }
+
       input:focus {
         box-shadow: 0 0 0 2px rgba(20, 241, 149, 0.3);
+      }
+
+      @media screen and (max-width: 480px) {
+        #root {
+          padding: 12px;
+        }
+        
+        button, input {
+          width: 100% !important;
+          margin: 8px 0 !important;
+        }
       }
     </style>
   </head>
