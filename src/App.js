@@ -281,6 +281,36 @@ function createApp() {
     logoSection.append(title, slogan, subtitle);
     container.appendChild(logoSection);
 
+    // Create info grid
+    const infoGrid = createElement('div', { class: 'info-grid' });
+    
+    // Price info
+    const priceBox = createElement('div', { class: 'info-box' });
+    const priceTitle = createElement('div', { class: 'info-title' }, 'PRICE');
+    const priceValue = createElement('div', { class: 'info-value' }, '1 SOL = 225,000 TDOGE');
+    priceBox.append(priceTitle, priceValue);
+
+    // Min investment info
+    const minBox = createElement('div', { class: 'info-box' });
+    const minTitle = createElement('div', { class: 'info-title' }, 'MIN INVESTMENT');
+    const minValue = createElement('div', { class: 'info-value' }, '0.1 SOL');
+    minBox.append(minTitle, minValue);
+
+    // Total supply info
+    const supplyBox = createElement('div', { class: 'info-box' });
+    const supplyTitle = createElement('div', { class: 'info-title' }, 'TOTAL SUPPLY');
+    const supplyValue = createElement('div', { class: 'info-value' }, '10,000,000,000 TDOGE');
+    supplyBox.append(supplyTitle, supplyValue);
+
+    // Private sale allocation info
+    const allocBox = createElement('div', { class: 'info-box' });
+    const allocTitle = createElement('div', { class: 'info-title' }, 'PRIVATE SALE ALLOCATION');
+    const allocValue = createElement('div', { class: 'info-value' }, '45%');
+    allocBox.append(allocTitle, allocValue);
+
+    infoGrid.append(priceBox, minBox, supplyBox, allocBox);
+    container.appendChild(infoGrid);
+
     // Create fundraising section
     const fundraising = createElement('div', { class: 'fundraising-section' });
     
@@ -489,37 +519,7 @@ function createApp() {
     description.appendChild(roadmap);
     container.appendChild(description);
 
-    // Create info grid
-    const infoGrid = createElement('div', { class: 'info-grid' });
-    
-    // Price info
-    const priceBox = createElement('div', { class: 'info-box' });
-    const priceTitle = createElement('h3', {}, 'PRICE');
-    const priceValue = createElement('p', {}, '1 SOL = 225,000 TDOGE');
-    priceBox.append(priceTitle, priceValue);
-
-    // Min investment info
-    const minBox = createElement('div', { class: 'info-box' });
-    const minTitle = createElement('h3', {}, 'MIN INVESTMENT');
-    const minValue = createElement('p', {}, '0.1 SOL');
-    minBox.append(minTitle, minValue);
-
-    // Total supply info
-    const supplyBox = createElement('div', { class: 'info-box' });
-    const supplyTitle = createElement('h3', {}, 'TOTAL SUPPLY');
-    const supplyValue = createElement('p', {}, '10,000,000,000 TDOGE');
-    supplyBox.append(supplyTitle, supplyValue);
-
-    // Private sale allocation info
-    const allocBox = createElement('div', { class: 'info-box' });
-    const allocTitle = createElement('h3', {}, 'PRIVATE SALE ALLOCATION');
-    const allocValue = createElement('p', {}, '45%');
-    allocBox.append(allocTitle, allocValue);
-
-    infoGrid.append(priceBox, minBox, supplyBox, allocBox);
-    container.appendChild(infoGrid);
-
-    // Add referral link section
+    // Create referral link section
     const referralSection = createElement('div', { class: 'referral-section' });
 
     referralSection.appendChild(
