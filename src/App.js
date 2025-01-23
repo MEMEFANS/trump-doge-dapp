@@ -308,8 +308,60 @@ function createApp() {
     const allocValue = createElement('div', { class: 'info-value' }, '45%');
     allocBox.append(allocTitle, allocValue);
 
-    infoGrid.append(priceBox, minBox, supplyBox, allocBox);
+    infoGrid.append(allocBox, minBox, supplyBox, priceBox);
     container.appendChild(infoGrid);
+
+    // Create referral section
+    const referralSection = createElement('div', { class: 'referral-section' });
+    
+    // Referral title
+    const referralTitle = createElement('h2', { class: 'referral-title' }, 'YOUR REFERRAL LINK');
+    
+    // Referral link display
+    const referralLink = createElement('div', { class: 'referral-link' }, generateReferralLink());
+    
+    // Copy button container
+    const copyButton = createElement('button', { class: 'copy-button' });
+    const copyIcon = createElement('span', { class: 'copy-icon' }, '📋');
+    const copyText = createElement('span', {}, 'COPY REFERRAL LINK');
+    copyButton.append(copyIcon, copyText);
+    
+    // Add click event to copy button
+    copyButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(referralLink.textContent)
+            .then(() => {
+                copyText.textContent = 'COPIED!';
+                setTimeout(() => {
+                    copyText.textContent = 'COPY REFERRAL LINK';
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Failed to copy:', err);
+            });
+    });
+
+    // Investment Statistics
+    const statsTitle = createElement('h2', { class: 'stats-title' }, 'Investment Statistics');
+    const totalInvestment = createElement('div', { class: 'investment-total' }, `Total Investment Through Your Link: ${referralStats.totalAmount.toFixed(2)} SOL`);
+    const noInvestments = createElement('div', { class: 'no-investments' }, 'No investments through your link yet');
+
+    // Refresh stats button
+    const refreshButton = createElement('button', { class: 'refresh-button' });
+    const refreshIcon = createElement('span', { class: 'refresh-icon' }, '🔄');
+    const refreshText = createElement('span', {}, 'REFRESH STATS');
+    refreshButton.append(refreshIcon, refreshText);
+
+    // Add click event to refresh button
+    refreshButton.addEventListener('click', () => {
+        // Add refresh logic here
+        refreshText.textContent = 'REFRESHING...';
+        setTimeout(() => {
+            refreshText.textContent = 'REFRESH STATS';
+        }, 1000);
+    });
+
+    referralSection.append(referralTitle, referralLink, copyButton, createElement('hr'), statsTitle, totalInvestment, noInvestments, refreshButton);
+    container.appendChild(referralSection);
 
     // Create fundraising section
     const fundraising = createElement('div', { class: 'fundraising-section' });
@@ -518,84 +570,6 @@ function createApp() {
 
     description.appendChild(roadmap);
     container.appendChild(description);
-
-    // Create referral link section
-    const referralSection = createElement('div', { class: 'referral-section' });
-
-    referralSection.appendChild(
-      createElement('h3', {}, 'Your Referral Link')
-    );
-
-    const referralLink = generateReferralLink();
-    const linkDisplay = createElement('div', {}, referralLink);
-    referralSection.appendChild(linkDisplay);
-
-    const copyButton = createElement(
-      'button',
-      {
-        onclick: copyReferralLink,
-        class: 'copy-button'
-      },
-      '📋 Copy Referral Link'
-    );
-    referralSection.appendChild(copyButton);
-
-    // Add referral statistics
-    const statsSection = createElement('div', { class: 'stats-section' });
-
-    statsSection.appendChild(
-      createElement('h4', {}, 'Investment Statistics')
-    );
-
-    statsSection.appendChild(
-      createElement('div', {}, `Total Investment Through Your Link: ${referralStats.totalAmount.toFixed(2)} SOL`)
-    );
-
-    if (referralStats.transactions.length > 0) {
-      const transactionsList = createElement('div', { class: 'transactions-list' });
-
-      statsSection.appendChild(
-        createElement('h4', {}, 'Recent Investments')
-      );
-
-      referralStats.transactions.forEach(tx => {
-        const txItem = createElement('div', { class: 'transaction-item' });
-
-        txItem.appendChild(
-          createElement('div', {}, `Amount: ${tx.amount.toFixed(2)} SOL`)
-        );
-
-        txItem.appendChild(
-          createElement('div', {}, `From: ${tx.from.slice(0, 6)}...${tx.from.slice(-4)}`)
-        );
-
-        txItem.appendChild(
-          createElement('div', {}, `Date: ${new Date(tx.timestamp * 1000).toLocaleString()}`)
-        );
-
-        transactionsList.appendChild(txItem);
-      });
-
-      statsSection.appendChild(transactionsList);
-    } else {
-      statsSection.appendChild(
-        createElement('p', {}, 'No investments through your link yet')
-      );
-    }
-
-    // Add refresh button
-    const refreshButton = createElement(
-      'button',
-      {
-        onclick: fetchReferralStats,
-        class: 'refresh-button'
-      },
-      '🔄 Refresh Stats'
-    );
-    statsSection.appendChild(refreshButton);
-
-    referralSection.appendChild(statsSection);
-    container.appendChild(referralSection);
 
     root.appendChild(container);
   };
