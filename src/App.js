@@ -270,54 +270,55 @@ function createApp() {
     const root = document.getElementById('root');
     root.innerHTML = '';
 
+    // Create main container
     const container = createElement('div', { class: 'container' });
 
-    const header = createElement('div', { class: 'header' });
-    
-    const logoSection = createElement('div', { class: 'logo-section' });
-    const title = createElement('h1', {}, 'TRUMP DOGE 2025');
-    const slogan = createElement('h2', {}, 'CRYPTO IS GREAT AGAIN! 🚀');
-    const subtitle = createElement('p', {}, 'Official Crypto of the Trump Administration');
-    logoSection.append(title, slogan, subtitle);
-    header.appendChild(logoSection);
+    // Create title
+    const title = createElement('div', { class: 'title' }, 'TRUMP DOGE');
+    container.appendChild(title);
 
+    // Create info grid
     const infoGrid = createElement('div', { class: 'info-grid' });
     
+    // Price info
     const priceBox = createElement('div', { class: 'info-box' });
     const priceTitle = createElement('h3', {}, 'PRICE');
     const priceValue = createElement('p', {}, '1 SOL = 225,000 TDOGE');
     priceBox.append(priceTitle, priceValue);
 
+    // Min investment info
     const minBox = createElement('div', { class: 'info-box' });
     const minTitle = createElement('h3', {}, 'MIN INVESTMENT');
     const minValue = createElement('p', {}, '0.1 SOL');
     minBox.append(minTitle, minValue);
 
+    // Total supply info
     const supplyBox = createElement('div', { class: 'info-box' });
     const supplyTitle = createElement('h3', {}, 'TOTAL SUPPLY');
     const supplyValue = createElement('p', {}, '10,000,000,000 TDOGE');
     supplyBox.append(supplyTitle, supplyValue);
 
+    // Private sale allocation info
     const allocBox = createElement('div', { class: 'info-box' });
     const allocTitle = createElement('h3', {}, 'PRIVATE SALE ALLOCATION');
     const allocValue = createElement('p', {}, '45%');
     allocBox.append(allocTitle, allocValue);
 
     infoGrid.append(priceBox, minBox, supplyBox, allocBox);
+    container.appendChild(infoGrid);
 
     if (!walletAddress) {
       const connectButton = createElement(
         'button',
-        {
-          onclick: connectWallet,
-          class: 'connect-button'
-        },
+        { onclick: connectWallet },
         'CONNECT WALLET'
       );
-      container.append(header, infoGrid, connectButton);
+      container.appendChild(connectButton);
     } else {
-      const walletInfo = createElement('p', {}, `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`);
-      container.append(header, infoGrid, walletInfo);
+      const walletInfo = createElement('div', { class: 'wallet-connected' }, 
+        `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+      );
+      container.appendChild(walletInfo);
 
       const inputContainer = createElement('div', { class: 'input-container' });
 
