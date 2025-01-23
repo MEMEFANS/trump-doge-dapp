@@ -2,9 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1a1f2e" />
-    <title>TRUMP DOGE - Make Crypto Great Again!</title>
+    <title>TRUMP DOGE</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -31,6 +32,8 @@
         background-color: #1a1f2e;
         min-height: 100vh;
         min-height: -webkit-fill-available;
+        display: flex;
+        flex-direction: column;
       }
 
       html {
@@ -38,27 +41,82 @@
       }
 
       #root {
-        padding: 16px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
         max-width: 100%;
         overflow-x: hidden;
       }
 
+      .container {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .logo-container {
+        background: #FFD700;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .info-box {
+        background: rgba(46, 196, 182, 0.1);
+        border: 1px solid rgba(46, 196, 182, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 15px 0;
+        text-align: center;
+      }
+
+      .info-box h3 {
+        color: #2EC4B6;
+        font-size: 16px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+      }
+
+      .info-box p {
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        margin: 0;
+      }
+
       button {
-        touch-action: manipulation;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
+        width: 100%;
+        padding: 16px;
+        border-radius: 12px;
+        border: none;
+        background: #2EC4B6;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        margin-top: 20px;
         cursor: pointer;
-        user-select: none;
+        transition: transform 0.2s, background-color 0.2s;
       }
 
       button:hover {
+        background: #25A99D;
         transform: translateY(-2px);
       }
 
       @media (hover: none) {
         button:hover {
           transform: none;
+          background: #2EC4B6;
         }
       }
 
@@ -67,24 +125,42 @@
       }
 
       input {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        font-size: 16px !important;
+        width: 100%;
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(46, 196, 182, 0.3);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        font-size: 16px;
+        margin-top: 10px;
       }
 
       input:focus {
-        box-shadow: 0 0 0 2px rgba(20, 241, 149, 0.3);
+        outline: none;
+        border-color: #2EC4B6;
+        box-shadow: 0 0 0 2px rgba(46, 196, 182, 0.2);
       }
 
       @media screen and (max-width: 480px) {
         #root {
-          padding: 12px;
+          padding: 16px;
         }
         
+        .container {
+          padding: 16px;
+        }
+
+        .logo-container {
+          padding: 20px;
+        }
+
+        .info-box {
+          padding: 16px;
+        }
+
         button, input {
-          width: 100% !important;
-          margin: 8px 0 !important;
+          padding: 14px;
+          font-size: 16px;
         }
       }
     </style>
