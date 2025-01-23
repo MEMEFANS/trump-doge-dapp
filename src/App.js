@@ -312,94 +312,84 @@ function createApp() {
     container.appendChild(infoGrid);
 
     // Create referral section
-    const referralSection = createElement('div', { class: 'referral-section' });
+    const referralSection = createElement('div', { class: 'referral-container' });
     
-    // Referral title
-    const referralTitle = createElement('h2', { class: 'referral-title' }, 'YOUR REFERRAL LINK');
+    // Create fundraising input section first
+    const fundraisingInput = createElement('div', { class: 'fundraising-input' });
     
-    // Referral link display
-    const referralLink = createElement('div', { class: 'referral-link' }, generateReferralLink());
-    
-    // Copy button container
-    const copyButton = createElement('button', { class: 'copy-button' });
-    const copyIcon = createElement('span', { class: 'copy-icon' }, '📋');
-    const copyText = createElement('span', {}, 'COPY REFERRAL LINK');
-    copyButton.append(copyIcon, copyText);
-    
-    // Add click event to copy button
-    copyButton.addEventListener('click', () => {
-        navigator.clipboard.writeText(referralLink.textContent)
-            .then(() => {
-                copyText.textContent = 'COPIED!';
-                setTimeout(() => {
-                    copyText.textContent = 'COPY REFERRAL LINK';
-                }, 2000);
-            })
-            .catch(err => {
-                console.error('Failed to copy:', err);
-            });
-    });
-
-    // Investment Statistics
-    const statsTitle = createElement('h2', { class: 'stats-title' }, 'Investment Statistics');
-    const totalInvestment = createElement('div', { class: 'investment-total' }, `Total Investment Through Your Link: ${referralStats.totalAmount.toFixed(2)} SOL`);
-    const noInvestments = createElement('div', { class: 'no-investments' }, 'No investments through your link yet');
-
-    // Refresh stats button
-    const refreshButton = createElement('button', { class: 'refresh-button' });
-    const refreshIcon = createElement('span', { class: 'refresh-icon' }, '🔄');
-    const refreshText = createElement('span', {}, 'REFRESH STATS');
-    refreshButton.append(refreshIcon, refreshText);
-
-    // Add click event to refresh button
-    refreshButton.addEventListener('click', () => {
-        // Add refresh logic here
-        refreshText.textContent = 'REFRESHING...';
-        setTimeout(() => {
-            refreshText.textContent = 'REFRESH STATS';
-        }, 1000);
-    });
-
-    referralSection.append(referralTitle, referralLink, copyButton, createElement('hr'), statsTitle, totalInvestment, noInvestments, refreshButton);
-    container.appendChild(referralSection);
-
-    // Create fundraising section
-    const fundraising = createElement('div', { class: 'fundraising-section' });
-    
-    // Add wallet connection
-    if (!walletAddress) {
-      const connectButton = createElement('button', {
-        onclick: connectWallet,
-        class: 'connect-button'
-      }, 'Connect Wallet');
-      fundraising.appendChild(connectButton);
+    // Wallet status
+    if (window.solana?.publicKey) {
+        const walletStatus = createElement('div', { class: 'wallet-status' },
+            'Connected: ' + window.solana.publicKey.toString().slice(0, 6) + '...' + window.solana.publicKey.toString().slice(-4)
+        );
+        fundraisingInput.appendChild(walletStatus);
+        
+        // Input container
+        const inputContainer = createElement('div', { class: 'input-container' });
+        const amountInput = createElement('input', {
+            type: 'number',
+            placeholder: 'Amount (SOL)',
+            min: '0.1',
+            step: '0.1',
+            value: amount,
+            onchange: (e) => { amount = e.target.value; }
+        });
+        
+        // Contribute button
+        const contributeButton = createElement('button', {
+            class: 'contribute-button',
+            onclick: handleDonate
+        }, 'CONTRIBUTE NOW');
+        
+        inputContainer.appendChild(amountInput);
+        inputContainer.appendChild(contributeButton);
+        fundraisingInput.appendChild(inputContainer);
     } else {
-      const walletDisplay = createElement('div', { class: 'wallet-status' },
-        `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-      );
-      fundraising.appendChild(walletDisplay);
-
-      const inputContainer = createElement('div', { class: 'input-container' });
-      const input = createElement('input', {
-        type: 'number',
-        placeholder: 'Amount (SOL)',
-        value: amount,
-        min: '0.1',
-        step: '0.1',
-        onchange: (e) => { amount = e.target.value; }
-      });
-
-      const donateButton = createElement('button', {
-        onclick: handleDonate,
-        class: 'donate-button'
-      }, 'CONTRIBUTE NOW');
-
-      inputContainer.appendChild(input);
-      inputContainer.appendChild(donateButton);
-      fundraising.appendChild(inputContainer);
+        const connectButton = createElement('button', {
+            class: 'connect-button',
+            onclick: connectWallet
+        }, 'CONNECT WALLET');
+        fundraisingInput.appendChild(connectButton);
     }
     
-    container.appendChild(fundraising);
+    // Add fundraising input to referral section
+    referralSection.appendChild(fundraisingInput);
+    
+    // Create referral content
+    const referralContent = createElement('div', { class: 'referral-content' });
+    
+    // Referral title
+    const referralTitle = createElement('h3', { class: 'referral-title' }, 'YOUR REFERRAL LINK');
+    
+    // Referral link
+    const referralLink = createElement('div', { class: 'referral-link' },
+        generateReferralLink()
+    );
+    
+    // Copy button
+    const copyButton = createElement('button', {
+        class: 'copy-button',
+        onclick: copyReferralLink
+    }, '📋 COPY REFERRAL LINK');
+    
+    // Stats section
+    const statsSection = createElement('div', { class: 'stats-section' });
+    const statsTitle = createElement('h4', { class: 'stats-title' }, 'Investment Statistics');
+    const statsValue = createElement('div', { class: 'stats-value' }, `Total Investment Through Your Link: ${referralStats.totalAmount.toFixed(2)} SOL`);
+    const statsNote = createElement('div', { class: 'stats-note' }, 'No investments through your link yet');
+    
+    // Refresh button
+    const refreshButton = createElement('button', {
+        class: 'refresh-button',
+        onclick: fetchReferralStats
+    }, '🔄 REFRESH STATS');
+    
+    // Append all elements
+    statsSection.append(statsTitle, statsValue, statsNote, refreshButton);
+    referralContent.append(referralTitle, referralLink, copyButton, statsSection);
+    referralSection.appendChild(referralContent);
+    
+    container.appendChild(referralSection);
 
     // Create main features section
     const mainFeaturesSection = createElement('div', { class: 'main-features-section' });
