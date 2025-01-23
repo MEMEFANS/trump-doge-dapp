@@ -35,25 +35,251 @@ body {
 }
 
 .container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Roboto', sans-serif;
+  color: white;
 }
 
-/* Title */
-.title {
-  color: #14F195;
-  font-size: 32px;
+/* Logo Section */
+.logo-section {
   text-align: center;
-  margin: 16px 0;
-  font-weight: bold;
-  text-shadow: 0 0 10px rgba(20, 241, 149, 0.3);
+  margin-bottom: 4rem;
+  padding: 3rem;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
 }
 
-/* Info grid */
+.logo-section h1 {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #1a1f2e;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.logo-section h2 {
+  font-size: 2rem;
+  color: #1a1f2e;
+  margin-bottom: 1rem;
+}
+
+.logo-section p {
+  font-size: 1.2rem;
+  color: #1a1f2e;
+  opacity: 0.9;
+}
+
+/* Main Features Section */
+.main-features-section {
+  background: rgba(26, 31, 46, 0.8);
+  padding: 2rem;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  border: 2px solid #FFD700;
+}
+
+.section-title {
+  color: #FFD700;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.features-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(20, 241, 149, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.feature-title {
+  color: #14F195;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.feature-description {
+  color: white;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Achievement Banner */
+.achievement-banner {
+  background: linear-gradient(135deg, rgba(20, 241, 149, 0.1) 0%, rgba(255, 215, 0, 0.1) 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 2rem 0;
+  border: 2px solid #FFD700;
+  text-align: center;
+}
+
+.achievement-title {
+  color: #FFD700;
+  margin-bottom: 1rem;
+  font-size: 1.6rem;
+}
+
+.achievement-item {
+  color: #14F195;
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+/* Description Section */
+.description-section {
+  background: rgba(20, 241, 149, 0.1);
+  padding: 2rem;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(20, 241, 149, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.description-title {
+  color: #14F195;
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.description-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.description-features-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.description-feature-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(20, 241, 149, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.description-feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.description-feature-title {
+  color: #14F195;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.description-feature-text {
+  color: white;
+  font-size: 1rem;
+}
+
+/* Tokenomics Section */
+.tokenomics-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(20, 241, 149, 0.2);
+}
+
+.tokenomics-title {
+  color: #14F195;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.tokenomics-list {
+  margin-bottom: 2rem;
+}
+
+.tokenomics-item {
+  color: white;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Vesting Schedule */
+.vesting-schedule {
+  margin-top: 2rem;
+}
+
+.vesting-title {
+  color: #14F195;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.vesting-item {
+  color: white;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Roadmap Section */
+.roadmap-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(20, 241, 149, 0.2);
+}
+
+.roadmap-title {
+  color: #14F195;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.roadmap-item {
+  color: white;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.roadmap-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background-color: #14F195;
+  border-radius: 50%;
+}
+
+/* Info Grid */
 .info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -99,6 +325,7 @@ button {
   max-width: 300px;
   margin: 8px auto;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
 button:active {
@@ -139,28 +366,124 @@ input:focus {
   outline: none;
 }
 
-/* Safe area fixes */
-@supports (padding: max(0px)) {
-  #root {
-    padding-left: max(16px, env(safe-area-inset-left));
-    padding-right: max(16px, env(safe-area-inset-right));
-    padding-top: max(16px, env(safe-area-inset-top));
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
-  }
+/* Referral section */
+.referral-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(26, 31, 46, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(20, 241, 149, 0.2);
+}
+
+.referral-section h3 {
+  color: #FFD700;
+  margin-bottom: 16px;
+  font-size: 20px;
+  text-transform: uppercase;
+}
+
+/* Transaction list */
+.transactions-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.transaction-item {
+  padding: 12px;
+  background: rgba(26, 31, 46, 0.8);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(20, 241, 149, 0.2);
+}
+
+.transaction-item div {
+  margin-bottom: 6px;
+  color: white;
+  font-size: 14px;
+}
+
+/* Stats section */
+.stats-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(20, 241, 149, 0.2);
+}
+
+.stats-section h4 {
+  color: #14F195;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+/* Tokenomics section */
+.tokenomics-section {
+  background: rgba(26, 31, 46, 0.8);
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+  border: 1px solid rgba(20, 241, 149, 0.2);
+}
+
+.tokenomics-section h3 {
+  color: #14F195;
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+
+.tokenomics-item {
+  font-size: 14px;
+  margin: 10px 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(20, 241, 149, 0.1);
+  color: white;
+}
+
+/* Vesting schedule */
+.vesting-schedule {
+  background: rgba(20, 241, 149, 0.05);
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 20px;
+  border: 1px solid rgba(20, 241, 149, 0.2);
+}
+
+.vesting-schedule h3 {
+  color: #14F195;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.vesting-item {
+  font-size: 14px;
+  margin: 8px 0;
+  color: white;
 }
 
 /* Mobile optimizations */
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .container {
-    padding: 15px;
+    padding: 12px;
   }
 
-  .title {
+  .logo-section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .logo-section h1 {
     font-size: 24px;
   }
 
+  .logo-section h2 {
+    font-size: 18px;
+  }
+
+  .logo-section p {
+    font-size: 14px;
+  }
+
   .info-grid {
-    grid-template-columns: 1fr;
     gap: 10px;
   }
 
@@ -169,16 +492,16 @@ input:focus {
   }
 
   .info-box h3 {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .info-box p {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   button {
     padding: 10px 16px;
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .input-container {
@@ -187,20 +510,44 @@ input:focus {
 
   input {
     padding: 10px;
-    font-size: 12px;
+    font-size: 13px;
+  }
+
+  .referral-section,
+  .tokenomics-section,
+  .vesting-schedule {
+    padding: 16px;
+  }
+
+  .referral-section h3,
+  .tokenomics-section h3 {
+    font-size: 18px;
+  }
+
+  .transaction-item {
+    padding: 10px;
+  }
+
+  .transaction-item div,
+  .tokenomics-item,
+  .vesting-item {
+    font-size: 13px;
   }
 }
 
-/* Fix for notched phones */
-@supports (padding: max(0px)) {
-  body {
-    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
-  }
-}
-
-/* Fix for mobile browsers address bar */
+/* iOS height fix */
 @supports (-webkit-touch-callout: none) {
-  body {
+  html {
     height: -webkit-fill-available;
+  }
+}
+
+/* Safe area fixes */
+@supports (padding: max(0px)) {
+  #root {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
 }

@@ -273,9 +273,183 @@ function createApp() {
     // Create main container
     const container = createElement('div', { class: 'container' });
 
-    // Create title
-    const title = createElement('div', { class: 'title' }, 'TRUMP DOGE');
-    container.appendChild(title);
+    // Create logo section
+    const logoSection = createElement('div', { class: 'logo-section' });
+    const title = createElement('h1', {}, 'TRUMP DOGE 2025');
+    const slogan = createElement('h2', {}, 'CRYPTO IS GREAT AGAIN! 🚀');
+    const subtitle = createElement('p', {}, 'Official Crypto of the Trump Administration');
+    logoSection.append(title, slogan, subtitle);
+    container.appendChild(logoSection);
+
+    // Create main features section
+    const mainFeaturesSection = createElement('div', { class: 'main-features-section' });
+    mainFeaturesSection.appendChild(
+      createElement('h3', { class: 'section-title' }, 'The People\'s Crypto')
+    );
+
+    const mainFeatures = [
+      {
+        title: 'Presidential Partnership',
+        description: '50% tokens dedicated to Trump Foundation initiatives - Making America and Crypto Great Again!'
+      },
+      {
+        title: 'Revolutionary Growth Model',
+        description: 'Innovative 500% price increase unlocking mechanism - Proven success in the Trump era'
+      },
+      {
+        title: 'America First Crypto',
+        description: 'Built on Solana - Fast, secure, and energy-efficient American technology'
+      },
+      {
+        title: 'Patriot Community',
+        description: 'Join millions of patriots in the fastest-growing crypto community'
+      }
+    ];
+
+    const mainFeaturesList = createElement('div', { class: 'features-list' });
+    mainFeatures.forEach(feature => {
+      const featureCard = createElement('div', { class: 'feature-card' });
+      featureCard.appendChild(
+        createElement('h4', { class: 'feature-title' }, feature.title)
+      );
+      featureCard.appendChild(
+        createElement('p', { class: 'feature-description' }, feature.description)
+      );
+      mainFeaturesList.appendChild(featureCard);
+    });
+    mainFeaturesSection.appendChild(mainFeaturesList);
+
+    // Add achievement banner
+    const achievementBanner = createElement('div', { class: 'achievement-banner' });
+    achievementBanner.appendChild(
+      createElement('h3', { class: 'achievement-title' }, '🏆 TRUMP DOGE Achievements')
+    );
+
+    const achievements = [
+      'Fastest Growing Crypto of 2025',
+      'Official Partner of Trump Foundation',
+      'Over 1 Million Patriot Holders',
+      'Most Secure Token Launch of 2025'
+    ];
+
+    achievements.forEach(achievement => {
+      achievementBanner.appendChild(
+        createElement('div', { class: 'achievement-item' }, `✓ ${achievement}`)
+      );
+    });
+
+    mainFeaturesSection.appendChild(achievementBanner);
+    container.appendChild(mainFeaturesSection);
+
+    // Project description
+    const description = createElement('div', { class: 'description-section' });
+    description.appendChild(
+      createElement('h2', { class: 'description-title' }, 'About TRUMP DOGE')
+    );
+    description.appendChild(
+      createElement('p', { class: 'description-text' }, 
+        'TRUMP DOGE is the most tremendous, absolutely fantastic fusion of two legendary meme communities. We\'re combining the unstoppable energy of DOGE with the winning spirit of TRUMP to create something truly spectacular!'
+      )
+    );
+    description.appendChild(
+      createElement('p', { class: 'description-text' }, 
+        'Our mission is simple: We\'re going to make crypto great again, and we\'re going to make it greater than ever before! 🚀'
+      )
+    );
+
+    // Key Features section
+    const descriptionFeatures = [
+      {
+        title: 'HUGE Community Power',
+        description: 'Join the strongest and most passionate community in crypto. We have the best people, absolutely the best!'
+      },
+      {
+        title: 'TREMENDOUS Security',
+        description: 'Built with the most secure and reliable blockchain technology. Nobody does security better than us!'
+      },
+      {
+        title: 'INCREDIBLE Growth',
+        description: 'Our token price only goes up, it\'s true! The gains are going to be beautiful, believe me!'
+      },
+      {
+        title: 'AMAZING Team',
+        description: 'We have assembled the greatest team in crypto. These people are incredible, they\'re winners!'
+      }
+    ];
+
+    const descriptionFeaturesList = createElement('div', { class: 'description-features-list' });
+    descriptionFeatures.forEach(feature => {
+      const featureCard = createElement('div', { class: 'description-feature-card' });
+      featureCard.appendChild(
+        createElement('h4', { class: 'description-feature-title' }, feature.title)
+      );
+      featureCard.appendChild(
+        createElement('p', { class: 'description-feature-text' }, feature.description)
+      );
+      descriptionFeaturesList.appendChild(featureCard);
+    });
+    description.appendChild(descriptionFeaturesList);
+
+    // Add tokenomics section
+    const tokenomics = createElement('div', { class: 'tokenomics-section' });
+    tokenomics.appendChild(
+      createElement('h3', { class: 'tokenomics-title' }, 'TRUMP DOGE Tokenomics')
+    );
+
+    const tokenomicsDetails = [
+      'Total Supply: 10,000,000,000 $TRUMPDOGE',
+      'Private Sale: 45%',
+      'Liquidity Pool: 5%',
+      'Trump Foundation: 50%'
+    ];
+
+    const tokenomicsList = createElement('div', { class: 'tokenomics-list' });
+    tokenomicsDetails.forEach(detail => {
+      tokenomicsList.appendChild(
+        createElement('div', { class: 'tokenomics-item' }, `🔥 ${detail}`)
+      );
+    });
+    tokenomics.appendChild(tokenomicsList);
+
+    // Add vesting schedule
+    const vestingSchedule = createElement('div', { class: 'vesting-schedule' });
+    vestingSchedule.appendChild(
+      createElement('h3', { class: 'vesting-title' }, 'Vesting Schedule')
+    );
+
+    const vestingDetails = [
+      'Launch: 4.5% Unlock',
+      '1% Unlock per 500% Price Increase'
+    ];
+
+    vestingDetails.forEach(detail => {
+      vestingSchedule.appendChild(
+        createElement('div', { class: 'vesting-item' }, `🚀 ${detail}`)
+      );
+    });
+    tokenomics.appendChild(vestingSchedule);
+    description.appendChild(tokenomics);
+
+    // Add roadmap
+    const roadmap = createElement('div', { class: 'roadmap-section' });
+    roadmap.appendChild(
+      createElement('h3', { class: 'roadmap-title' }, 'The Greatest Roadmap Ever')
+    );
+
+    const roadmapPhases = [
+      'Phase 1: Launch & Community Building 🚀',
+      'Phase 2: Exchange Listings & Partnerships 🤝',
+      'Phase 3: TRUMP DOGE Ecosystem Expansion 🌟'
+    ];
+
+    roadmapPhases.forEach(phase => {
+      roadmap.appendChild(
+        createElement('p', { class: 'roadmap-item' }, phase)
+      );
+    });
+
+    description.appendChild(roadmap);
+    container.appendChild(description);
 
     // Create info grid
     const infoGrid = createElement('div', { class: 'info-grid' });
