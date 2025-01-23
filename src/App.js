@@ -281,6 +281,44 @@ function createApp() {
     logoSection.append(title, slogan, subtitle);
     container.appendChild(logoSection);
 
+    // Create fundraising section
+    const fundraising = createElement('div', { class: 'fundraising-section' });
+    
+    // Add wallet connection
+    if (!walletAddress) {
+      const connectButton = createElement('button', {
+        onclick: connectWallet,
+        class: 'connect-button'
+      }, 'Connect Wallet');
+      fundraising.appendChild(connectButton);
+    } else {
+      const walletDisplay = createElement('div', { class: 'wallet-status' },
+        `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+      );
+      fundraising.appendChild(walletDisplay);
+
+      const inputContainer = createElement('div', { class: 'input-container' });
+      const input = createElement('input', {
+        type: 'number',
+        placeholder: 'Amount (SOL)',
+        value: amount,
+        min: '0.1',
+        step: '0.1',
+        onchange: (e) => { amount = e.target.value; }
+      });
+
+      const donateButton = createElement('button', {
+        onclick: handleDonate,
+        class: 'donate-button'
+      }, 'CONTRIBUTE NOW');
+
+      inputContainer.appendChild(input);
+      inputContainer.appendChild(donateButton);
+      fundraising.appendChild(inputContainer);
+    }
+    
+    container.appendChild(fundraising);
+
     // Create main features section
     const mainFeaturesSection = createElement('div', { class: 'main-features-section' });
     mainFeaturesSection.appendChild(
@@ -481,119 +519,83 @@ function createApp() {
     infoGrid.append(priceBox, minBox, supplyBox, allocBox);
     container.appendChild(infoGrid);
 
-    if (!walletAddress) {
-      const connectButton = createElement(
-        'button',
-        { onclick: connectWallet },
-        'CONNECT WALLET'
-      );
-      container.appendChild(connectButton);
-    } else {
-      const walletInfo = createElement('div', { class: 'wallet-connected' }, 
-        `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-      );
-      container.appendChild(walletInfo);
+    // Add referral link section
+    const referralSection = createElement('div', { class: 'referral-section' });
 
-      const inputContainer = createElement('div', { class: 'input-container' });
+    referralSection.appendChild(
+      createElement('h3', {}, 'Your Referral Link')
+    );
 
-      const input = createElement('input', {
-        type: 'number',
-        value: amount,
-        placeholder: 'Enter SOL Amount',
-        onchange: (e) => { amount = e.target.value; },
-        class: 'input-field'
+    const referralLink = generateReferralLink();
+    const linkDisplay = createElement('div', {}, referralLink);
+    referralSection.appendChild(linkDisplay);
+
+    const copyButton = createElement(
+      'button',
+      {
+        onclick: copyReferralLink,
+        class: 'copy-button'
+      },
+      '📋 Copy Referral Link'
+    );
+    referralSection.appendChild(copyButton);
+
+    // Add referral statistics
+    const statsSection = createElement('div', { class: 'stats-section' });
+
+    statsSection.appendChild(
+      createElement('h4', {}, 'Investment Statistics')
+    );
+
+    statsSection.appendChild(
+      createElement('div', {}, `Total Investment Through Your Link: ${referralStats.totalAmount.toFixed(2)} SOL`)
+    );
+
+    if (referralStats.transactions.length > 0) {
+      const transactionsList = createElement('div', { class: 'transactions-list' });
+
+      statsSection.appendChild(
+        createElement('h4', {}, 'Recent Investments')
+      );
+
+      referralStats.transactions.forEach(tx => {
+        const txItem = createElement('div', { class: 'transaction-item' });
+
+        txItem.appendChild(
+          createElement('div', {}, `Amount: ${tx.amount.toFixed(2)} SOL`)
+        );
+
+        txItem.appendChild(
+          createElement('div', {}, `From: ${tx.from.slice(0, 6)}...${tx.from.slice(-4)}`)
+        );
+
+        txItem.appendChild(
+          createElement('div', {}, `Date: ${new Date(tx.timestamp * 1000).toLocaleString()}`)
+        );
+
+        transactionsList.appendChild(txItem);
       });
 
-      const donateButton = createElement(
-        'button',
-        {
-          onclick: handleDonate,
-          class: 'donate-button'
-        },
-        'CONTRIBUTE NOW'
-      );
-
-      inputContainer.append(input, donateButton);
-      container.appendChild(inputContainer);
-
-      // Add referral link section
-      const referralSection = createElement('div', { class: 'referral-section' });
-
-      referralSection.appendChild(
-        createElement('h3', {}, 'Your Referral Link')
-      );
-
-      const referralLink = generateReferralLink();
-      const linkDisplay = createElement('div', {}, referralLink);
-      referralSection.appendChild(linkDisplay);
-
-      const copyButton = createElement(
-        'button',
-        {
-          onclick: copyReferralLink,
-          class: 'copy-button'
-        },
-        '📋 Copy Referral Link'
-      );
-      referralSection.appendChild(copyButton);
-
-      // Add referral statistics
-      const statsSection = createElement('div', { class: 'stats-section' });
-
+      statsSection.appendChild(transactionsList);
+    } else {
       statsSection.appendChild(
-        createElement('h4', {}, 'Investment Statistics')
+        createElement('p', {}, 'No investments through your link yet')
       );
-
-      statsSection.appendChild(
-        createElement('div', {}, `Total Investment Through Your Link: ${referralStats.totalAmount.toFixed(2)} SOL`)
-      );
-
-      if (referralStats.transactions.length > 0) {
-        const transactionsList = createElement('div', { class: 'transactions-list' });
-
-        statsSection.appendChild(
-          createElement('h4', {}, 'Recent Investments')
-        );
-
-        referralStats.transactions.forEach(tx => {
-          const txItem = createElement('div', { class: 'transaction-item' });
-
-          txItem.appendChild(
-            createElement('div', {}, `Amount: ${tx.amount.toFixed(2)} SOL`)
-          );
-
-          txItem.appendChild(
-            createElement('div', {}, `From: ${tx.from.slice(0, 6)}...${tx.from.slice(-4)}`)
-          );
-
-          txItem.appendChild(
-            createElement('div', {}, `Date: ${new Date(tx.timestamp * 1000).toLocaleString()}`)
-          );
-
-          transactionsList.appendChild(txItem);
-        });
-
-        statsSection.appendChild(transactionsList);
-      } else {
-        statsSection.appendChild(
-          createElement('p', {}, 'No investments through your link yet')
-        );
-      }
-
-      // Add refresh button
-      const refreshButton = createElement(
-        'button',
-        {
-          onclick: fetchReferralStats,
-          class: 'refresh-button'
-        },
-        '🔄 Refresh Stats'
-      );
-      statsSection.appendChild(refreshButton);
-
-      referralSection.appendChild(statsSection);
-      container.appendChild(referralSection);
     }
+
+    // Add refresh button
+    const refreshButton = createElement(
+      'button',
+      {
+        onclick: fetchReferralStats,
+        class: 'refresh-button'
+      },
+      '🔄 Refresh Stats'
+    );
+    statsSection.appendChild(refreshButton);
+
+    referralSection.appendChild(statsSection);
+    container.appendChild(referralSection);
 
     root.appendChild(container);
   };
