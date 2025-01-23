@@ -1,0 +1,13 @@
+{
+  "name": "trump-doge-dapp",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@solana/web3.js": "^1.87.6",
+    "buffer": "^6.0.3",
+    "http-server": "^14.1.1"
+  },
+  "scripts": {
+    "start": "http-server -p 3000"
+  }
+}
