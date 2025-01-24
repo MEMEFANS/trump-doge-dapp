@@ -65,11 +65,28 @@ function createApp() {
       return;
     }
     try {
-      await navigator.clipboard.writeText(link);
+      // 尝试使用现代 Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(link);
+        alert('Referral link copied to clipboard!');
+        return;
+      }
+
+      // 后备方案：创建临时输入框
+      const tempInput = document.createElement('input');
+      tempInput.style.position = 'fixed';
+      tempInput.style.opacity = '0';
+      tempInput.value = link;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      tempInput.setSelectionRange(0, 99999); // 用于移动设备
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
       alert('Referral link copied to clipboard!');
     } catch (err) {
       console.error('Failed to copy:', err);
-      alert('Failed to copy referral link');
+      // 如果复制失败，至少显示链接让用户手动复制
+      alert('Unable to copy automatically. Your referral link is: ' + link);
     }
   }
 
