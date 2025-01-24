@@ -664,7 +664,10 @@ function createApp() {
     container.appendChild(description);
 
     // Add social links section at the bottom
-    const socialLinks = createElement('div', { class: 'social-links' });
+    const socialLinks = createElement('div', { class: 'social-links-container' });
+    
+    const communityText = createElement('div', { class: 'community-text' }, '加入社区');
+    const socialIconsContainer = createElement('div', { class: 'social-links' });
     
     // Twitter/X link
     const xLink = createElement('a', { 
@@ -675,7 +678,7 @@ function createApp() {
     });
     const xIcon = createElement('img', {
       class: 'social-icon',
-      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MCA1MCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTI4LjQgMi4zTDQyLjcgMTkuNEw0NC4yIDIxLjNMNDYuMiAyMC4yTDQ3LjYgMTkuM0w0Ni4zIDIxLjlMNDUuNCAyMy42TDQ3LjIgMjMuM0w0OS4zIDIyLjlMNDcuNSAyNC41QzQ3LjUgMjQuNSAzOS43IDMxLjEgMzkuMyAzMS40QzM5LjMgMzEuNCAzOS4zIDMxLjYgMzkuMyAzMS45QzM5LjMgMzQuNyAzOS40IDQyLjEgMzkuNCA0Mi4xTDM1LjcgNDIuMUwzNS43IDMzLjdMMjEuOSAxNy4yTDIxLjkgNDIuMUwxNy43IDQyLjFMMTcuNyAyLjNMMjIuMiAyLjNMMzYuOSAyMC4xTDM2LjkgMi4zTDI4LjQgMi4zWiIvPjwvc3ZnPg==',
+      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTIxLjUzIDcuNDd2LS4wOGMwLS44Mi0uNjctMS40OC0xLjQ4LTEuNDhoLTEuMzVsLjI2LS45MmMuMDEtLjAzLjAyLS4wNi4wMi0uMXYtLjU2YzAtMS4wOS0uODktMS45OC0xLjk4LTEuOThIMTUuMmMtLjgxIDAtMS41NC40OS0xLjg0IDEuMjRsLS40NSAxLjEySDguMjFjLS44MSAwLTEuNTQuNDktMS44NCAxLjI0TDUuOSA3LjM5SDQuNWMtLjgxIDAtMS40Ny42Ni0xLjQ3IDEuNDd2MTIuNjJjMCAuODEuNjYgMS40NyAxLjQ3IDEuNDdoMTUuNTNjLjgxIDAgMS40Ny0uNjYgMS40Ny0xLjQ3VjcuNDd6bS0zLjA1IDIuNjJjLS4yOSAwLS41Mi0uMjQtLjUyLS41MnMuMjQtLjUyLjUyLS41Mi41Mi4yNC41Mi41Mi0uMjMuNTItLjUyLjUyem0tMi42MiAwYy0uMjkgMC0uNTItLjI0LS41Mi0uNTJzLjI0LS41Mi41Mi0uNTIuNTIuMjQuNTIuNTItLjIzLjUyLS41Mi41MnptLTIuNjIgMGMtLjI5IDAtLjUyLS4yNC0uNTItLjUycy4yNC0uNTIuNTItLjUyLjUyLjI0LjUyLjUyLS4yMy41Mi0uNTIuNTJ6bS0yLjYyIDBjLS4yOSAwLS41Mi0uMjQtLjUyLS41MnMuMjQtLjUyLjUyLS41Mi41Mi4yNC41Mi41Mi0uMjMuNTItLjUyLjUyem0tMi42MiAwYy0uMjkgMC0uNTItLjI0LS41Mi0uNTJzLjI0LS41Mi41Mi0uNTIuNTIuMjQuNTIuNTItLjIzLjUyLS41Mi41MnptMTMuMSA5LjQ4SDMuMDN2LTguNDVoMTguMDV2OC40NXoiLz48L3N2Zz4=',
       alt: 'X (Twitter) Icon'
     });
     xLink.appendChild(xIcon);
@@ -689,12 +692,13 @@ function createApp() {
     });
     const telegramIcon = createElement('img', {
       class: 'social-icon',
-      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTQxLjQyLDcuMzA5Yy0wLjAyNi0wLjI3My0wLjM3Mi0wLjQ1OC0wLjY0OC0wLjM3MmMtMC42OTcsMC4yMTYtMS4zNzEsMC40ODItMi4wNDcsMC43NTNjLTIuODEzLDEuMDc0LTUuNTI0LDIuMzY2LTguMTQ3LDMuODJjLTQuOTMyLDIuNzM3LTkuNzQ1LDUuNjA5LTE0LjQzOCw4LjYzNmMtMC4yNzYsMC4xNzMtMC4zNjIsMC40OTgtMC4yMDQsMC43NjZjMC4xMzMsMC4yMjYsMC4zOTIsMC4zNTMsMC42NTYsMC4zMTZsNy4xMjktMS4wMDljMC4xOTgtMC4wMjksMC4zOTEtMC4xMDUsMC41NDktMC4yMjVjMi44MDUtMi4xMzgsNS43OTktNC4xMjgsOC45NjQtNS44NDVjMC4xNTgsMC4xMi0wLjM1MSwwLjE5Ni0wLjU0OSwwLjIyNWwtNy4xMjksMS4wMDljLTAuMjY0LDAuMDM3LTAuNTIzLTAuMDktMC42NTYtMC4zMTZjLTAuMTU4LTAuMjY4LTAuMDcyLTAuNTkzLDAuMjA0LTAuNzY2YzQuNjkzLTMuMDI3LDkuNTA2LTUuODk5LDE0LjQzOC04LjYzNmMyLjYyMy0xLjQ1NCw1LjMzNC0yLjc0Niw4LjE0Ny0zLjgyYzAuNjc2LTAuMjcxLDEuMzUtMC41MzcsMi4wNDctMC43NTNjMC4yNzYtMC4wODYsMC42MjIsMC4wOTksMC42NDgsMC4zNzJjMC4xNDQsMS41MDEsMC4xNDQsMy4wMTUsMCw0LjUxNmMtMC4wMjYsMC4yNzMsMC4xNzMsMC41MTYsMC40NDYsMC41NDJjMC4yNzMsMC4wMjYsMC41MTYtMC4xNzMsMC41NDItMC40NDZDNDEuNTY0LDEwLjMyNCw0MS41NjQsOC44MSw0MS40Miw3LjMwOXoiLz48L3N2Zz4=',
+      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTkuNzggMTguNjVMOS45NiAxNC4zTDkuOTYgMTQuM0wxNy4wOSA3Ljk3QzE3LjQyIDcuNjggMTcuMDIgNy41MyAxNi41OSA3Ljc5TDcuODEgMTMuMDlMMy41NiAxMS43NUMzLjU2IDExLjc1IDIuNjQgMTEuNDYgMi42NCAxMC43NUMyLjY0IDEwLjE3IDMuNzcgOS44NSA0LjM4IDkuNjJMNS4wNCA5LjM3TDE4Ljc2IDMuODRDMTguNzYgMy44NCAyMi41IDIuNDEgMjIuNSA0Ljk1QzIyLjUgNS45NSAyMS44OCA2LjM3IDIxLjg4IDYuMzdMMjEuODggNi4zN0wxOC4yOSAxOC4zMUMxOC4yOSAxOC4zMSAxNy44NSAxOS42MSAxNi42NSAxOS42MUMxNS42IDE5LjYxIDE0LjgzIDE4LjkyIDE0LjgzIDE4LjkyTDE0LjgzIDE4LjkyTDExLjQyIDE2LjQxTDkuNzggMTguNjVaIi8+PC9zdmc+',
       alt: 'Telegram Icon'
     });
     telegramLink.appendChild(telegramIcon);
     
-    socialLinks.append(xLink, telegramLink);
+    socialIconsContainer.append(xLink, telegramLink);
+    socialLinks.append(communityText, socialIconsContainer);
     container.appendChild(socialLinks);
 
     root.appendChild(container);
