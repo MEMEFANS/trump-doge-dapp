@@ -28,18 +28,82 @@ function createApp() {
     transactions: []
   };
 
+  // Check if localStorage is available
+  const isStorageAvailable = () => {
+    try {
+      const test = '__storage_test__';
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // Try to load saved stats
+  if (isStorageAvailable()) {
+    try {
+      const savedStats = localStorage.getItem('referralStats');
+      if (savedStats) {
+        referralStats = JSON.parse(savedStats);
+      }
+    } catch (err) {
+      console.error('Error loading saved stats:', err);
+    }
+  }
+
+  // Save referral stats to localStorage
+  function saveReferralStats(stats) {
+    if (isStorageAvailable()) {
+      try {
+        localStorage.setItem('referralStats', JSON.stringify(stats));
+      } catch (err) {
+        console.error('Error saving stats:', err);
+      }
+    }
+    referralStats = stats;
+  }
+
+  // Clear referral stats
+  const clearReferralStats = () => {
+    if (isStorageAvailable()) {
+      try {
+        localStorage.removeItem('referralStats');
+      } catch (err) {
+        console.error('Error clearing stats:', err);
+      }
+    }
+    referralStats = {
+      totalAmount: 0,
+      transactions: []
+    };
+    renderApp();
+  };
+
   // Get referral ID from URL if exists
   const urlParams = new URLSearchParams(window.location.search);
   const ref = urlParams.get('ref');
   if (ref) {
     referralId = ref;
     // Store referral ID in localStorage
-    localStorage.setItem('referralId', ref);
+    if (isStorageAvailable()) {
+      try {
+        localStorage.setItem('referralId', ref);
+      } catch (err) {
+        console.error('Error saving referral ID:', err);
+      }
+    }
   } else {
     // Check if there's a stored referral ID
-    const storedRef = localStorage.getItem('referralId');
-    if (storedRef) {
-      referralId = storedRef;
+    if (isStorageAvailable()) {
+      try {
+        const storedRef = localStorage.getItem('referralId');
+        if (storedRef) {
+          referralId = storedRef;
+        }
+      } catch (err) {
+        console.error('Error loading referral ID:', err);
+      }
     }
   }
 
@@ -239,44 +303,65 @@ function createApp() {
 
       // Process each transaction
       for (const sig of signatures) {
-        const tx = await connection.getTransaction(sig.signature, {
-          maxSupportedTransactionVersion: 0
-        });
+        try {
+          const tx = await connection.getTransaction(sig.signature, {
+            maxSupportedTransactionVersion: 0
+          });
 
-        if (!tx || !tx.meta || tx.meta.err) continue;
+          if (!tx || !tx.meta || tx.meta.err) continue;
 
-        // Look for memo instruction with referral
-        const memoInstr = tx.transaction.message.instructions.find(instr => 
-          instr.programId.toString() === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
-        );
+          // Look for memo instruction with referral
+          const memoInstr = tx.transaction.message.instructions.find(instr => 
+            instr.programId.toString() === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
+          );
 
-        if (memoInstr) {
-          const memo = Buffer.from(memoInstr.data).toString();
-          if (memo.startsWith('ref:') && memo.slice(4) === walletAddress) {
-            // Find the transfer instruction
-            const transferInstr = tx.transaction.message.instructions.find(instr =>
-              instr.programId.toString() === '11111111111111111111111111111111'
-            );
+          if (memoInstr) {
+            const memo = Buffer.from(memoInstr.data).toString();
+            console.log('Found memo:', memo);
+            console.log('Current wallet:', walletAddress);
+            if (memo.startsWith('ref:')) {
+              const refAddress = memo.slice(4);
+              console.log('Referral address:', refAddress);
+              if (refAddress === walletAddress) {
+                // Find the transfer instruction
+                const transferInstr = tx.transaction.message.instructions.find(instr =>
+                  instr.programId.toString() === '11111111111111111111111111111111'
+                );
 
-            if (transferInstr) {
-              const amount = transferInstr.data.readBigUInt64LE(0) / BigInt(solanaWeb3.LAMPORTS_PER_SOL);
-              total += Number(amount);
-              txs.push({
-                signature: sig.signature,
-                amount: Number(amount),
-                timestamp: sig.blockTime,
-                from: tx.transaction.message.accountKeys[0].toString()
-              });
+                if (transferInstr) {
+                  // 获取转账金额
+                  const preBalances = tx.meta.preBalances;
+                  const postBalances = tx.meta.postBalances;
+                  const fromIndex = tx.transaction.message.accountKeys.findIndex(key => 
+                    key.toString() === tx.transaction.message.accountKeys[0].toString()
+                  );
+                  const amount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
+                  
+                  console.log('Transaction amount:', amount);
+                  total += amount;
+                  txs.push({
+                    signature: sig.signature,
+                    amount: amount,
+                    timestamp: sig.blockTime,
+                    from: tx.transaction.message.accountKeys[0].toString()
+                  });
+                }
+              }
             }
           }
+        } catch (err) {
+          console.error('Error processing transaction:', err);
+          continue;
         }
       }
 
-      referralStats = {
+      const newStats = {
         totalAmount: total,
         transactions: txs.sort((a, b) => b.timestamp - a.timestamp)
       };
-
+      
+      console.log('Updated referral stats:', newStats);
+      saveReferralStats(newStats); // 保存到 localStorage
       renderApp();
     } catch (error) {
       console.error('Error fetching referral stats:', error);
@@ -577,6 +662,42 @@ function createApp() {
 
     description.appendChild(roadmap);
     container.appendChild(description);
+
+    // Add social links section at the bottom
+    const socialLinks = createElement('div', { class: 'social-links' });
+    
+    // Twitter/X link
+    const xLink = createElement('a', { 
+      class: 'social-link',
+      href: 'https://x.com/TRUMPDogecoin_',
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    });
+    const xIcon = createElement('img', {
+      class: 'social-icon',
+      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTE4LjI0NCA1Ljk1N2gtMi40MjFsMS40MTQtNC4xNDNoLTIuOTM5bC0xLjQxNCA0LjE0M2gtMi45MjlsMS40MTQtNC4xNDNoLTIuOTM5bC0xLjQxNCA0LjE0M0g0LjA3N3YyLjkzOWgxLjU3NUw0LjczNSAxMi4xODZIMi4xNjd2Mi45MzloMS41NzVsLTEuNDE0IDQuMTQzaDIuOTM5bDEuNDE0LTQuMTQzaDIuOTI5bC0xLjQxNCA0LjE0M2gyLjkzOWwxLjQxNC00LjE0M2gyLjQyMXYtMi45MzloLTEuNTc1bC45MTctMy4yOWgyLjQyMVY1Ljk1N3pNMTIuMDM3IDEyLjE4Nkg5LjEwOGwuOTE3LTMuMjloMi45MjlsLS45MTcgMy4yOXoiLz48L3N2Zz4=',
+      alt: 'X (Twitter) Icon'
+    });
+    const xText = createElement('span', { class: 'social-text' }, 'Follow us on X');
+    xLink.append(xIcon, xText);
+    
+    // Telegram link
+    const telegramLink = createElement('a', { 
+      class: 'social-link',
+      href: 'https://t.me/TDOGE1',
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    });
+    const telegramIcon = createElement('img', {
+      class: 'social-icon',
+      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTExLjk0NCAwQTEyIDEyIDAgMCAwIDAgMTJhMTIgMTIgMCAwIDAgMTIgMTIgMTIgMTIgMCAwIDAgMTItMTJBMTIgMTIgMCAwIDAgMTIgMGgtLjA1NnpNMTYuOSA3LjJjLjAzLS4yNS0uMjItLjM1LS40OC0uMjhsLTExLjggNC42Yy0uMjUuMS0uMjUuMzQtLjA1LjQybDMuMDIgMS4wMmExLjIgMS4yIDAgMCAwIDEuMDItLjEzbDcuMi00LjhjLjEzLS4xLjI1LS4wNC4xNS4wOGwtNS44NCA1LjM4Yy0uMi4xOC0uMTYuNDUuMDguNThsMy4zNiAyLjRjLjI0LjE2LjU3LjA0LjY2LS4yNmwyLjY4LTkuMDJ6Ii8+PC9zdmc+',
+      alt: 'Telegram Icon'
+    });
+    const telegramText = createElement('span', { class: 'social-text' }, 'Join Telegram');
+    telegramLink.append(telegramIcon, telegramText);
+    
+    socialLinks.append(xLink, telegramLink);
+    container.appendChild(socialLinks);
 
     root.appendChild(container);
   };
