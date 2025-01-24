@@ -795,8 +795,8 @@ hr {
   color: #ffffff;
   font-size: 24px;
   font-weight: bold;
-  margin-bottom: 20px;
-  text-transform: uppercase;
+  margin-bottom: 25px;
+  letter-spacing: 2px;
 }
 
 .social-links {
@@ -810,12 +810,12 @@ hr {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   transition: transform 0.2s;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
-  padding: 8px;
+  padding: 10px;
 }
 
 .social-link:hover {

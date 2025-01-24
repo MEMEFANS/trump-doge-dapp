@@ -666,7 +666,7 @@ function createApp() {
     // Add social links section at the bottom
     const socialLinks = createElement('div', { class: 'social-links-container' });
     
-    const communityText = createElement('div', { class: 'community-text' }, '加入社区');
+    const communityText = createElement('div', { class: 'community-text' }, 'JOIN COMMUNITY');
     const socialIconsContainer = createElement('div', { class: 'social-links' });
     
     // Twitter/X link
@@ -678,7 +678,7 @@ function createApp() {
     });
     const xIcon = createElement('img', {
       class: 'social-icon',
-      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTIxLjUzIDcuNDd2LS4wOGMwLS44Mi0uNjctMS40OC0xLjQ4LTEuNDhoLTEuMzVsLjI2LS45MmMuMDEtLjAzLjAyLS4wNi4wMi0uMXYtLjU2YzAtMS4wOS0uODktMS45OC0xLjk4LTEuOThIMTUuMmMtLjgxIDAtMS41NC40OS0xLjg0IDEuMjRsLS40NSAxLjEySDguMjFjLS44MSAwLTEuNTQuNDktMS44NCAxLjI0TDUuOSA3LjM5SDQuNWMtLjgxIDAtMS40Ny42Ni0xLjQ3IDEuNDd2MTIuNjJjMCAuODEuNjYgMS40NyAxLjQ3IDEuNDdoMTUuNTNjLjgxIDAgMS40Ny0uNjYgMS40Ny0xLjQ3VjcuNDd6bS0zLjA1IDIuNjJjLS4yOSAwLS41Mi0uMjQtLjUyLS41MnMuMjQtLjUyLjUyLS41Mi41Mi4yNC41Mi41Mi0uMjMuNTItLjUyLjUyem0tMi42MiAwYy0uMjkgMC0uNTItLjI0LS41Mi0uNTJzLjI0LS41Mi41Mi0uNTIuNTIuMjQuNTIuNTItLjIzLjUyLS41Mi41MnptLTIuNjIgMGMtLjI5IDAtLjUyLS4yNC0uNTItLjUycy4yNC0uNTIuNTItLjUyLjUyLjI0LjUyLjUyLS4yMy41Mi0uNTIuNTJ6bS0yLjYyIDBjLS4yOSAwLS41Mi0uMjQtLjUyLS41MnMuMjQtLjUyLjUyLS41Mi41Mi4yNC41Mi41Mi0uMjMuNTItLjUyLjUyem0tMi42MiAwYy0uMjkgMC0uNTItLjI0LS41Mi0uNTJzLjI0LS41Mi41Mi0uNTIuNTIuMjQuNTIuNTItLjIzLjUyLS41Mi41MnptMTMuMSA5LjQ4SDMuMDN2LTguNDVoMTguMDV2OC40NXoiLz48L3N2Zz4=',
+      src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIzNi43NDggNDEuOTU1TDE1MS4zMjkgMTQ1LjE5TDIzOC45NDEgMjU4LjA0NUgxOTYuNjE4TDEzNy45NjEgMTgwLjA3NEw3MC4yNjQ1IDI1OC4wNDVIMjQuNjIwNkwxMTQuOTg4IDE0OS4wMTlMMzEuMTcxNyA0MS45NTVINzQuNzE1Mkw xMjcuNzIyIDExMy40NzFMMTkwLjg4NCA0MS45NTVIMjM2Ljc0OFoiIGZpbGw9IiNGRkZGRkYiLz48L3N2Zz4=',
       alt: 'X (Twitter) Icon'
     });
     xLink.appendChild(xIcon);
