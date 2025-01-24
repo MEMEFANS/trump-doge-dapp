@@ -137,7 +137,7 @@ function createApp() {
         return;
       }
 
-      const recipientAddress = 'BcXV94bgVxk49Fj5NPBwbN1D9ffxMmm6P7JHnfBsdTJ9';
+      const recipientAddress = '4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF';
       
       try {
         // Convert amount to lamports
@@ -159,7 +159,7 @@ function createApp() {
         // Create transfer instruction
         const transferInstruction = solanaWeb3.SystemProgram.transfer({
           fromPubkey: new solanaWeb3.PublicKey(walletAddress),
-          toPubkey: new solanaWeb3.PublicKey(recipientAddress),
+          toPubkey: new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
           lamports: lamports
         });
 
@@ -213,7 +213,7 @@ function createApp() {
     try {
       // Get all signatures for the recipient address
       const signatures = await connection.getSignaturesForAddress(
-        new solanaWeb3.PublicKey('BcXV94bgVxk49Fj5NPBwbN1D9ffxMmm6P7JHnfBsdTJ9'),
+        new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
         { limit: 1000 }
       );
 
