@@ -675,11 +675,10 @@ function createApp() {
     });
     const xIcon = createElement('img', {
       class: 'social-icon',
-      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTE4LjI0NCA1Ljk1N2gtMi40MjFsMS40MTQtNC4xNDNoLTIuOTM5bC0xLjQxNCA0LjE0M2gtMi45MjlsMS40MTQtNC4xNDNoLTIuOTM5bC0xLjQxNCA0LjE0M0g0LjA3N3YyLjkzOWgxLjU3NUw0LjczNSAxMi4xODZIMi4xNjd2Mi45MzloMS41NzVsLTEuNDE0IDQuMTQzaDIuOTM5bDEuNDE0LTQuMTQzaDIuOTI5bC0xLjQxNCA0LjE0M2gyLjkzOWwxLjQxNC00LjE0M2gyLjQyMXYtMi45MzloLTEuNTc1bC45MTctMy4yOWgyLjQyMVY1Ljk1N3pNMTIuMDM3IDEyLjE4Nkg5LjEwOGwuOTE3LTMuMjloMi45MjlsLS45MTcgMy4yOXoiLz48L3N2Zz4=',
+      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MCA1MCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTI4LjQgMi4zTDQyLjcgMTkuNEw0NC4yIDIxLjNMNDYuMiAyMC4yTDQ3LjYgMTkuM0w0Ni4zIDIxLjlMNDUuNCAyMy42TDQ3LjIgMjMuM0w0OS4zIDIyLjlMNDcuNSAyNC41QzQ3LjUgMjQuNSAzOS43IDMxLjEgMzkuMyAzMS40QzM5LjMgMzEuNCAzOS4zIDMxLjYgMzkuMyAzMS45QzM5LjMgMzQuNyAzOS40IDQyLjEgMzkuNCA0Mi4xTDM1LjcgNDIuMUwzNS43IDMzLjdMMjEuOSAxNy4yTDIxLjkgNDIuMUwxNy43IDQyLjFMMTcuNyAyLjNMMjIuMiAyLjNMMzYuOSAyMC4xTDM2LjkgMi4zTDI4LjQgMi4zWiIvPjwvc3ZnPg==',
       alt: 'X (Twitter) Icon'
     });
-    const xText = createElement('span', { class: 'social-text' }, 'Follow us on X');
-    xLink.append(xIcon, xText);
+    xLink.appendChild(xIcon);
     
     // Telegram link
     const telegramLink = createElement('a', { 
@@ -690,11 +689,10 @@ function createApp() {
     });
     const telegramIcon = createElement('img', {
       class: 'social-icon',
-      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTExLjk0NCAwQTEyIDEyIDAgMCAwIDAgMTJhMTIgMTIgMCAwIDAgMTIgMTIgMTIgMTIgMCAwIDAgMTItMTJBMTIgMTIgMCAwIDAgMTIgMGgtLjA1NnpNMTYuOSA3LjJjLjAzLS4yNS0uMjItLjM1LS40OC0uMjhsLTExLjggNC42Yy0uMjUuMS0uMjUuMzQtLjA1LjQybDMuMDIgMS4wMmExLjIgMS4yIDAgMCAwIDEuMDItLjEzbDcuMi00LjhjLjEzLS4xLjI1LS4wNC4xNS4wOGwtNS44NCA1LjM4Yy0uMi4xOC0uMTYuNDUuMDguNThsMy4zNiAyLjRjLjI0LjE2LjU3LjA0LjY2LS4yNmwyLjY4LTkuMDJ6Ii8+PC9zdmc+',
+      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTQxLjQyLDcuMzA5Yy0wLjAyNi0wLjI3My0wLjM3Mi0wLjQ1OC0wLjY0OC0wLjM3MmMtMC42OTcsMC4yMTYtMS4zNzEsMC40ODItMi4wNDcsMC43NTNjLTIuODEzLDEuMDc0LTUuNTI0LDIuMzY2LTguMTQ3LDMuODJjLTQuOTMyLDIuNzM3LTkuNzQ1LDUuNjA5LTE0LjQzOCw4LjYzNmMtMC4yNzYsMC4xNzMtMC4zNjIsMC40OTgtMC4yMDQsMC43NjZjMC4xMzMsMC4yMjYsMC4zOTIsMC4zNTMsMC42NTYsMC4zMTZsNy4xMjktMS4wMDljMC4xOTgtMC4wMjksMC4zOTEtMC4xMDUsMC41NDktMC4yMjVjMi44MDUtMi4xMzgsNS43OTktNC4xMjgsOC45NjQtNS44NDVjMC4xNTgsMC4xMi0wLjM1MSwwLjE5Ni0wLjU0OSwwLjIyNWwtNy4xMjksMS4wMDljLTAuMjY0LDAuMDM3LTAuNTIzLTAuMDktMC42NTYtMC4zMTZjLTAuMTU4LTAuMjY4LTAuMDcyLTAuNTkzLDAuMjA0LTAuNzY2YzQuNjkzLTMuMDI3LDkuNTA2LTUuODk5LDE0LjQzOC04LjYzNmMyLjYyMy0xLjQ1NCw1LjMzNC0yLjc0Niw4LjE0Ny0zLjgyYzAuNjc2LTAuMjcxLDEuMzUtMC41MzcsMi4wNDctMC43NTNjMC4yNzYtMC4wODYsMC42MjIsMC4wOTksMC42NDgsMC4zNzJjMC4xNDQsMS41MDEsMC4xNDQsMy4wMTUsMCw0LjUxNmMtMC4wMjYsMC4yNzMsMC4xNzMsMC41MTYsMC40NDYsMC41NDJjMC4yNzMsMC4wMjYsMC41MTYtMC4xNzMsMC41NDItMC40NDZDNDEuNTY0LDEwLjMyNCw0MS41NjQsOC44MSw0MS40Miw3LjMwOXoiLz48L3N2Zz4=',
       alt: 'Telegram Icon'
     });
-    const telegramText = createElement('span', { class: 'social-text' }, 'Join Telegram');
-    telegramLink.append(telegramIcon, telegramText);
+    telegramLink.appendChild(telegramIcon);
     
     socialLinks.append(xLink, telegramLink);
     container.appendChild(socialLinks);
