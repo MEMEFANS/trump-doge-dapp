@@ -262,22 +262,20 @@ function createApp() {
     }
   );
 
-  // 计算代币数量
-  function calculateTokens(solAmount) {
-    // 1 SOL = 225,000 TDOGE
-    return solAmount * 225000;
-  }
-
   // 获取用户私募数据
   const fetchUserPresaleStats = async () => {
     if (!connection || !walletAddress) return;
     
     try {
+      console.log('Fetching presale stats for wallet:', walletAddress);
+
       // 获取所有转账到私募地址的交易
       const signatures = await connection.getSignaturesForAddress(
         new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
         { limit: 1000 }
       );
+
+      console.log('Found signatures:', signatures.length);
 
       let totalSol = 0;
 
@@ -292,28 +290,35 @@ function createApp() {
 
           // 检查是否是当前用户的交易
           const fromAddress = tx.transaction.message.accountKeys[0].toString();
-          if (fromAddress !== walletAddress) continue;
-
-          // 找到转账指令
-          const transferInstr = tx.transaction.message.instructions.find(instr =>
-            instr.programId.toString() === '11111111111111111111111111111111'
-          );
-
-          if (transferInstr) {
-            // 获取转账金额
-            const preBalances = tx.meta.preBalances;
-            const postBalances = tx.meta.postBalances;
-            const fromIndex = tx.transaction.message.accountKeys.findIndex(key => 
-              key.toString() === walletAddress
+          console.log('Transaction from:', fromAddress);
+          console.log('Current wallet:', walletAddress);
+          
+          if (fromAddress === walletAddress) {
+            // 找到转账指令
+            const transferInstr = tx.transaction.message.instructions.find(instr =>
+              instr.programId.toString() === '11111111111111111111111111111111'
             );
-            const solAmount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
-            totalSol += solAmount;
+
+            if (transferInstr) {
+              // 获取转账金额
+              const preBalances = tx.meta.preBalances;
+              const postBalances = tx.meta.postBalances;
+              const fromIndex = tx.transaction.message.accountKeys.findIndex(key => 
+                key.toString() === walletAddress
+              );
+              const solAmount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
+              
+              console.log('Found transaction amount:', solAmount);
+              totalSol += solAmount;
+            }
           }
         } catch (err) {
           console.error('Error processing transaction:', err);
           continue;
         }
       }
+
+      console.log('Total SOL:', totalSol);
 
       // 更新用户私募统计
       userPresaleStats = {
@@ -327,91 +332,9 @@ function createApp() {
     }
   };
 
-  const handleDonate = async () => {
-    try {
-      if (!window.solana) {
-        alert('Please install Phantom wallet!');
-        return;
-      }
-
-      if (!walletAddress) {
-        alert('Please connect your wallet first!');
-        return;
-      }
-
-      if (!amount || amount <= 0) {
-        alert('Please enter a valid amount!');
-        return;
-      }
-
-      if (amount < 0.1) {
-        alert('Minimum investment is 0.1 SOL!');
-        return;
-      }
-
-      const recipientAddress = '4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX';
-      
-      try {
-        // Convert amount to lamports
-        const lamports = Math.floor(amount * solanaWeb3.LAMPORTS_PER_SOL);
-
-        // Create transaction
-        const transaction = new solanaWeb3.Transaction().add(
-          solanaWeb3.SystemProgram.transfer({
-            fromPubkey: new solanaWeb3.PublicKey(walletAddress),
-            toPubkey: new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
-            lamports: lamports
-          })
-        );
-
-        // Add memo instruction if there's a referral
-        if (referralId) {
-          const memoInstruction = new solanaWeb3.TransactionInstruction({
-            keys: [],
-            programId: new solanaWeb3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'),
-            data: Buffer.from(`ref:${referralId}`)
-          });
-          transaction.add(memoInstruction);
-        }
-
-        // Get latest blockhash
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = new solanaWeb3.PublicKey(walletAddress);
-
-        // Request signature from wallet
-        const { signature } = await window.solana.signAndSendTransaction(transaction);
-        console.log('Transaction sent:', signature);
-
-        // Wait for confirmation
-        console.log('Waiting for confirmation...');
-        const confirmationStatus = await connection.confirmTransaction({
-          signature,
-          blockhash,
-          lastValidBlockHeight
-        }, 'confirmed');
-
-        console.log('Transaction confirmed:', confirmationStatus);
-
-        if (confirmationStatus.value && confirmationStatus.value.err) {
-          throw new Error('Transaction failed');
-        }
-
-        alert('Transaction successful! Thank you for your support!');
-        amount = '';
-        renderApp();
-      } catch (err) {
-        console.error('Transaction error:', err);
-        if (err.message.includes('User rejected')) {
-          alert('Transaction was cancelled by user');
-        } else {
-          alert('Transaction failed. Please check your wallet balance and try again!');
-        }
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Transaction failed. Please make sure you have enough SOL and try again!');
-    }
+  // 计算代币数量
+  const calculateTokens = (solAmount) => {
+    return solAmount * 225000;
   };
 
   // 获取推荐统计数据
@@ -518,6 +441,93 @@ function createApp() {
       if (statsSection) {
         statsSection.style.opacity = '1';
       }
+    }
+  };
+
+  const handleDonate = async () => {
+    try {
+      if (!window.solana) {
+        alert('Please install Phantom wallet!');
+        return;
+      }
+
+      if (!walletAddress) {
+        alert('Please connect your wallet first!');
+        return;
+      }
+
+      if (!amount || amount <= 0) {
+        alert('Please enter a valid amount!');
+        return;
+      }
+
+      if (amount < 0.1) {
+        alert('Minimum investment is 0.1 SOL!');
+        return;
+      }
+
+      const recipientAddress = '4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX';
+      
+      try {
+        // Convert amount to lamports
+        const lamports = Math.floor(amount * solanaWeb3.LAMPORTS_PER_SOL);
+
+        // Create transaction
+        const transaction = new solanaWeb3.Transaction().add(
+          solanaWeb3.SystemProgram.transfer({
+            fromPubkey: new solanaWeb3.PublicKey(walletAddress),
+            toPubkey: new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
+            lamports: lamports
+          })
+        );
+
+        // Add memo instruction if there's a referral
+        if (referralId) {
+          const memoInstruction = new solanaWeb3.TransactionInstruction({
+            keys: [],
+            programId: new solanaWeb3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'),
+            data: Buffer.from(`ref:${referralId}`)
+          });
+          transaction.add(memoInstruction);
+        }
+
+        // Get latest blockhash
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = new solanaWeb3.PublicKey(walletAddress);
+
+        // Request signature from wallet
+        const { signature } = await window.solana.signAndSendTransaction(transaction);
+        console.log('Transaction sent:', signature);
+
+        // Wait for confirmation
+        console.log('Waiting for confirmation...');
+        const confirmationStatus = await connection.confirmTransaction({
+          signature,
+          blockhash,
+          lastValidBlockHeight
+        }, 'confirmed');
+
+        console.log('Transaction confirmed:', confirmationStatus);
+
+        if (confirmationStatus.value && confirmationStatus.value.err) {
+          throw new Error('Transaction failed');
+        }
+
+        alert('Transaction successful! Thank you for your support!');
+        amount = '';
+        renderApp();
+      } catch (err) {
+        console.error('Transaction error:', err);
+        if (err.message.includes('User rejected')) {
+          alert('Transaction was cancelled by user');
+        } else {
+          alert('Transaction failed. Please check your wallet balance and try again!');
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Transaction failed. Please make sure you have enough SOL and try again!');
     }
   };
 
