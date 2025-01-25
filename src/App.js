@@ -356,61 +356,94 @@ function createApp() {
 
       for (const sig of signatures) {
         try {
+          console.log('\n检查交易:', sig.signature);
+          
           const tx = await connection.getTransaction(sig.signature, {
             maxSupportedTransactionVersion: 0
           });
           
-          if (!tx || !tx.meta || tx.meta.err) continue;
+          if (!tx || !tx.meta || tx.meta.err) {
+            console.log('交易无效');
+            continue;
+          }
 
           // 检查转账金额
           const preBalance = tx.meta.preBalances[0];
           const postBalance = tx.meta.postBalances[0];
           const amount = (preBalance - postBalance) / solanaWeb3.LAMPORTS_PER_SOL;
           
-          if (amount <= 0) continue;
+          console.log('转账金额:', amount.toFixed(4), 'SOL');
+          
+          if (amount <= 0) {
+            console.log('金额无效');
+            continue;
+          }
 
           // 检查交易指令
-          if (!tx.transaction?.message?.instructions) continue;
+          if (!tx.transaction?.message?.instructions) {
+            console.log('无交易指令');
+            continue;
+          }
 
           // 查找 Memo 指令
+          let foundMemo = false;
           for (const instr of tx.transaction.message.instructions) {
             try {
               if (!instr.programId) continue;
 
-              if (instr.programId.toBase58() === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr') {
-                if (!instr.data) continue;
+              const programId = instr.programId.toBase58();
+              if (programId === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr') {
+                if (!instr.data) {
+                  console.log('Memo数据为空');
+                  continue;
+                }
 
-                // 解码并清理 Memo 数据
-                const memoData = Buffer.from(instr.data).toString();
-                const cleanMemoData = memoData.replace(/[^a-zA-Z0-9]/g, '');
-                const cleanWalletAddress = walletAddress.replace(/[^a-zA-Z0-9]/g, '');
+                const memoData = Buffer.from(instr.data).toString('utf8').trim();
+                console.log('Memo内容:', memoData);
+                console.log('当前钱包:', walletAddress);
 
-                console.log('比较:', {
-                  memo: cleanMemoData,
-                  wallet: cleanWalletAddress
-                });
-
-                if (cleanMemoData.toLowerCase() === cleanWalletAddress.toLowerCase()) {
-                  console.log('✅ 找到推荐交易:', {
-                    signature: sig.signature,
-                    amount: amount.toFixed(4),
-                    time: tx.blockTime ? new Date(tx.blockTime * 1000).toLocaleString() : 'unknown'
-                  });
+                // 检查是否为有效的钱包地址
+                try {
+                  const memoPubkey = new solanaWeb3.PublicKey(memoData);
+                  const walletPubkey = new solanaWeb3.PublicKey(walletAddress);
                   
-                  totalAmount += amount;
-                  transactions.push({
-                    signature: sig.signature,
-                    amount: amount,
-                    timestamp: tx.blockTime || Date.now() / 1000
-                  });
-                  break;
+                  if (memoPubkey.toBase58() === walletPubkey.toBase58()) {
+                    console.log('✅ 找到推荐交易!');
+                    console.log('详情:', {
+                      signature: sig.signature,
+                      amount: amount.toFixed(4),
+                      time: tx.blockTime ? new Date(tx.blockTime * 1000).toLocaleString() : 'unknown'
+                    });
+                    
+                    totalAmount += amount;
+                    transactions.push({
+                      signature: sig.signature,
+                      amount: amount,
+                      timestamp: tx.blockTime || Date.now() / 1000
+                    });
+                    
+                    foundMemo = true;
+                    break;
+                  } else {
+                    console.log('❌ 钱包地址不匹配');
+                  }
+                } catch (e) {
+                  console.log('❌ 无效的钱包地址');
+                  continue;
                 }
               }
             } catch (e) {
+              console.log('处理指令出错:', e);
               continue;
             }
           }
+
+          if (!foundMemo) {
+            console.log('未找到匹配的Memo');
+          }
+
         } catch (err) {
+          console.error('处理交易出错:', err);
           continue;
         }
       }
