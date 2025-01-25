@@ -443,68 +443,62 @@ function createApp() {
         return;
       }
 
-      const recipientAddress = '4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX';
-      
-      try {
-        // Convert amount to lamports
-        const lamports = Math.floor(amount * solanaWeb3.LAMPORTS_PER_SOL);
+      // 创建交易
+      const transaction = new solanaWeb3.Transaction();
 
-        // Create transaction
-        const transaction = new solanaWeb3.Transaction().add(
-          solanaWeb3.SystemProgram.transfer({
-            fromPubkey: new solanaWeb3.PublicKey(walletAddress),
-            toPubkey: new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
-            lamports: lamports
-          })
-        );
+      // 添加转账指令
+      transaction.add(
+        solanaWeb3.SystemProgram.transfer({
+          fromPubkey: new solanaWeb3.PublicKey(walletAddress),
+          toPubkey: new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
+          lamports: Math.floor(amount * solanaWeb3.LAMPORTS_PER_SOL)
+        })
+      );
 
-        // Add memo instruction if there's a referral
-        if (referralId) {
-          const memoInstruction = new solanaWeb3.TransactionInstruction({
-            keys: [],
-            programId: new solanaWeb3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'),
-            data: Buffer.from(`ref:${referralId}`)
-          });
-          transaction.add(memoInstruction);
-        }
-
-        // Get latest blockhash
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = new solanaWeb3.PublicKey(walletAddress);
-
-        // Request signature from wallet
-        const { signature } = await window.solana.signAndSendTransaction(transaction);
-        console.log('Transaction sent:', signature);
-
-        // Wait for confirmation
-        console.log('Waiting for confirmation...');
-        const confirmationStatus = await connection.confirmTransaction({
-          signature,
-          blockhash,
-          lastValidBlockHeight
-        }, 'confirmed');
-
-        console.log('Transaction confirmed:', confirmationStatus);
-
-        if (confirmationStatus.value && confirmationStatus.value.err) {
-          throw new Error('Transaction failed');
-        }
-
-        alert('Transaction successful! Thank you for your support!');
-        amount = '';
-        renderApp();
-      } catch (err) {
-        console.error('Transaction error:', err);
-        if (err.message.includes('User rejected')) {
-          alert('Transaction was cancelled by user');
-        } else {
-          alert('Transaction failed. Please check your wallet balance and try again!');
-        }
+      // 如果有推荐人，添加 memo 指令
+      if (referralId) {
+        const memoInstruction = new solanaWeb3.TransactionInstruction({
+          keys: [],
+          programId: new solanaWeb3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'),
+          data: Buffer.from(referralId)
+        });
+        transaction.add(memoInstruction);
       }
+
+      // 获取最新的 blockhash
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = new solanaWeb3.PublicKey(walletAddress);
+
+      // 发送交易
+      const signed = await window.solana.signAndSendTransaction(transaction);
+      console.log('Transaction sent:', signed.signature);
+
+      // 等待确认
+      const confirmation = await connection.confirmTransaction(signed.signature);
+      if (confirmation.value.err) {
+        throw new Error('Transaction failed');
+      }
+
+      alert('Transaction successful!');
+      
+      // 刷新统计
+      await Promise.all([
+        fetchUserPresaleStats(),
+        fetchReferralStats()
+      ]);
+
+      // 清空输入
+      amount = '';
+      renderApp();
+
     } catch (error) {
-      console.error('Error:', error);
-      alert('Transaction failed. Please make sure you have enough SOL and try again!');
+      console.error('Transaction error:', error);
+      if (error.message.includes('User rejected')) {
+        alert('Transaction cancelled by user');
+      } else {
+        alert('Transaction failed. Please try again!');
+      }
     }
   };
 
