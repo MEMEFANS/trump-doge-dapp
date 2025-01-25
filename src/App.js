@@ -334,10 +334,12 @@ function createApp() {
     if (!connection || !walletAddress) return;
     
     try {
+      console.log('Fetching referral stats for wallet:', walletAddress);
+      
       // 获取所有转账到私募地址的交易
       const signatures = await connection.getSignaturesForAddress(
         new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
-        { limit: 1000 }
+        { limit: 100 }
       );
 
       let totalAmount = 0;
@@ -349,6 +351,13 @@ function createApp() {
           const tx = await connection.getTransaction(sig.signature);
           if (!tx || !tx.meta || tx.meta.err) continue;
 
+          // 查找转账指令
+          const transferInstr = tx.transaction.message.instructions.find(instr =>
+            instr.programId.toString() === '11111111111111111111111111111111'
+          );
+
+          if (!transferInstr) continue;
+
           // 查找 Memo 指令
           const memoInstr = tx.transaction.message.instructions.find(instr => 
             instr.programId.toString() === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
@@ -356,28 +365,48 @@ function createApp() {
 
           if (memoInstr && memoInstr.data) {
             const memoData = Buffer.from(memoInstr.data).toString().trim();
+            console.log('Found memo:', memoData);
             
-            // 如果 memo 包含当前钱包地址，说明是通过我们的链接
+            // 检查 memo 是否匹配当前钱包地址
             if (memoData === walletAddress) {
               // 获取转账金额
-              const preBalance = tx.meta.preBalances[0];
-              const postBalance = tx.meta.postBalances[0];
-              const amount = (preBalance - postBalance) / solanaWeb3.LAMPORTS_PER_SOL;
+              const fromIndex = tx.transaction.message.accountKeys.findIndex(key => 
+                key.toString() === tx.transaction.message.accountKeys[0].toString()
+              );
 
-              if (amount > 0) {
-                totalAmount += amount;
-                transactions.push({
-                  signature: sig.signature,
-                  amount: amount,
-                  timestamp: tx.blockTime
-                });
+              if (fromIndex !== -1) {
+                const preBalances = tx.meta.preBalances;
+                const postBalances = tx.meta.postBalances;
+                const amount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
+
+                if (amount > 0) {
+                  console.log('Found referral transaction:', {
+                    signature: sig.signature,
+                    amount: amount,
+                    from: tx.transaction.message.accountKeys[0].toString(),
+                    memo: memoData
+                  });
+                  
+                  totalAmount += amount;
+                  transactions.push({
+                    signature: sig.signature,
+                    amount: amount,
+                    timestamp: tx.blockTime
+                  });
+                }
               }
             }
           }
         } catch (err) {
+          console.error('Error processing transaction:', err);
           continue;
         }
       }
+
+      console.log('Final referral stats:', {
+        totalAmount,
+        transactionCount: transactions.length
+      });
 
       // 更新推荐统计
       referralStats = {
