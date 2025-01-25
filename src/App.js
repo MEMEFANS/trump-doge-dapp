@@ -449,13 +449,17 @@ function createApp() {
                       signature: sig.signature,
                       originalAmount: amount.toFixed(4),
                       roundedAmount: roundedAmount.toFixed(1),
-                      time: tx.blockTime ? new Date(tx.blockTime * 1000).toLocaleString() : 'unknown'
+                      timestamp: tx.blockTime
                     });
                     
-                    totalAmount += roundedAmount; // 使用四舍五入后的金额
+                    // 处理手续费
+                    const fee = tx.meta?.fee / solanaWeb3.LAMPORTS_PER_SOL;
+                    const netAmount = roundedAmount - fee;
+                    
+                    totalAmount += netAmount;
                     transactions.push({
                       signature: sig.signature,
-                      amount: roundedAmount, // 使用四舍五入后的金额
+                      amount: netAmount,
                       timestamp: tx.blockTime || Date.now() / 1000
                     });
                     
