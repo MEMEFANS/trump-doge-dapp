@@ -370,9 +370,11 @@ function createApp() {
           // 检查转账金额
           const preBalance = tx.meta.preBalances[0];
           const postBalance = tx.meta.postBalances[0];
-          const amount = Number(((preBalance - postBalance) / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4));
+          const rawAmount = (preBalance - postBalance) / solanaWeb3.LAMPORTS_PER_SOL;
+          const amount = Number(rawAmount.toFixed(1));
           
-          console.log('转账金额:', amount, 'SOL');
+          console.log('原始金额:', rawAmount, 'SOL');
+          console.log('处理后金额:', amount, 'SOL');
           
           if (amount <= 0) {
             console.log('金额无效');
@@ -415,7 +417,10 @@ function createApp() {
                       time: tx.blockTime ? new Date(tx.blockTime * 1000).toLocaleString() : 'unknown'
                     });
                     
-                    totalAmount = Number((totalAmount + amount).toFixed(4));
+                    const newTotal = totalAmount + amount;
+                    totalAmount = Number(newTotal.toFixed(1));
+                    console.log('累计金额:', totalAmount, 'SOL');
+                    
                     transactions.push({
                       signature: sig.signature,
                       amount: amount,
@@ -449,7 +454,7 @@ function createApp() {
       }
 
       console.log('\n=== 统计结果 ===');
-      console.log('总金额:', totalAmount.toFixed(4), 'SOL');
+      console.log('总金额:', totalAmount.toFixed(1), 'SOL');
       console.log('交易数量:', transactions.length);
 
       referralStats = {
@@ -658,7 +663,7 @@ function createApp() {
     const statsContainer = createElement('div', { class: 'stats-container' });
     const totalStats = createElement('div', { class: 'total-stats' });
     const statLabel = createElement('div', { class: 'stat-label' }, 'Total Referral Earnings:');
-    const statValue = createElement('div', { class: 'stat-value' }, `${referralStats ? referralStats.totalAmount.toFixed(2) : '0.00'} SOL`);
+    const statValue = createElement('div', { class: 'stat-value' }, `${referralStats ? referralStats.totalAmount.toFixed(1) : '0.0'} SOL`);
     totalStats.append(statLabel, statValue);
     statsContainer.appendChild(totalStats);
     if (referralStats && referralStats.transactions.length > 0) {
@@ -667,7 +672,7 @@ function createApp() {
       transactionsList.appendChild(transactionsHeader);
       referralStats.transactions.forEach(tx => {
         const transactionItem = createElement('div', { class: 'transaction-item' });
-        const amount = createElement('span', { class: 'amount' }, `+${tx.amount.toFixed(2)} SOL`);
+        const amount = createElement('span', { class: 'amount' }, `+${tx.amount.toFixed(1)} SOL`);
         const time = createElement('span', { class: 'time' }, new Date(tx.timestamp * 1000).toLocaleString());
         transactionItem.append(amount, time);
         transactionsList.appendChild(transactionItem);
@@ -689,7 +694,7 @@ function createApp() {
     // Create user presale stats section
     const userPresaleStatsSection = createElement('div', { class: 'user-presale-stats-section' });
     const userPresaleStatsTitle = createElement('h4', { class: 'user-presale-stats-title' }, 'Your Private Sale Stats');
-    const userPresaleStatsValue = createElement('div', { class: 'user-presale-stats-value' }, `Your Private Sale Contribution: ${userPresaleStats.solAmount.toFixed(2)} SOL`);
+    const userPresaleStatsValue = createElement('div', { class: 'user-presale-stats-value' }, `Your Private Sale Contribution: ${userPresaleStats.solAmount.toFixed(1)} SOL`);
     const userPresaleStatsTokenValue = createElement('div', { class: 'user-presale-stats-token-value' }, `Your Private Sale Tokens: ${userPresaleStats.tokenAmount} TDOGE`);
     userPresaleStatsSection.append(userPresaleStatsTitle, userPresaleStatsValue, userPresaleStatsTokenValue);
     referralSection.appendChild(userPresaleStatsSection);
