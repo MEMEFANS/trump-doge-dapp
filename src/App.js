@@ -370,9 +370,9 @@ function createApp() {
           // 检查转账金额
           const preBalance = tx.meta.preBalances[0];
           const postBalance = tx.meta.postBalances[0];
-          const amount = (preBalance - postBalance) / solanaWeb3.LAMPORTS_PER_SOL;
+          const amount = Number(((preBalance - postBalance) / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4));
           
-          console.log('转账金额:', amount.toFixed(4), 'SOL');
+          console.log('转账金额:', amount, 'SOL');
           
           if (amount <= 0) {
             console.log('金额无效');
@@ -411,11 +411,11 @@ function createApp() {
                     console.log('✅ 找到推荐交易!');
                     console.log('详情:', {
                       signature: sig.signature,
-                      amount: amount.toFixed(4),
+                      amount: amount,
                       time: tx.blockTime ? new Date(tx.blockTime * 1000).toLocaleString() : 'unknown'
                     });
                     
-                    totalAmount += amount;
+                    totalAmount = Number((totalAmount + amount).toFixed(4));
                     transactions.push({
                       signature: sig.signature,
                       amount: amount,
