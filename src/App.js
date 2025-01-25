@@ -49,7 +49,14 @@ function createApp() {
     try {
       const savedStats = localStorage.getItem('referralStats');
       if (savedStats) {
-        referralStats = JSON.parse(savedStats);
+        const parsed = JSON.parse(savedStats);
+        referralStats = {
+          totalAmount: Number(parsed.totalAmount.toFixed(1)),
+          transactions: parsed.transactions.map(tx => ({
+            ...tx,
+            amount: Number(tx.amount.toFixed(1))
+          }))
+        };
       }
     } catch (err) {
       console.error('Error loading saved stats:', err);
@@ -60,7 +67,14 @@ function createApp() {
   function saveReferralStats(stats) {
     if (isStorageAvailable()) {
       try {
-        localStorage.setItem('referralStats', JSON.stringify(stats));
+        const statsToSave = {
+          totalAmount: Number(stats.totalAmount.toFixed(1)),
+          transactions: stats.transactions.map(tx => ({
+            ...tx,
+            amount: Number(tx.amount.toFixed(1))
+          }))
+        };
+        localStorage.setItem('referralStats', JSON.stringify(statsToSave));
       } catch (err) {
         console.error('Error saving stats:', err);
       }
@@ -457,10 +471,18 @@ function createApp() {
       console.log('总金额:', totalAmount.toFixed(1), 'SOL');
       console.log('交易数量:', transactions.length);
 
-      referralStats = {
-        totalAmount: totalAmount,
-        transactions: transactions.sort((a, b) => b.timestamp - a.timestamp)
+      // 保存前确保金额精度
+      const statsToSave = {
+        totalAmount: Number(totalAmount.toFixed(1)),
+        transactions: transactions.map(tx => ({
+          ...tx,
+          amount: Number(tx.amount.toFixed(1))
+        }))
       };
+
+      // 更新状态
+      referralStats = statsToSave;
+      saveReferralStats(statsToSave);
 
       renderApp();
     } catch (error) {
