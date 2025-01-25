@@ -352,15 +352,27 @@ function createApp() {
           if (!tx || !tx.meta || tx.meta.err) continue;
 
           // 查找转账指令
-          const transferInstr = tx.transaction.message.instructions.find(instr =>
-            instr.programId.toString() === '11111111111111111111111111111111'
-          );
+          const instructions = tx.transaction.message.instructions;
+          let transferAmount = 0;
 
-          if (!transferInstr) continue;
+          for (let i = 0; i < instructions.length; i++) {
+            const instruction = instructions[i];
+            
+            // 检查是否是系统程序的转账指令
+            if (instruction.programId.equals(solanaWeb3.SystemProgram.programId)) {
+              const decodedInstruction = solanaWeb3.SystemProgram.decodeInstruction(instruction);
+              if (decodedInstruction.type === 'transfer') {
+                transferAmount = decodedInstruction.data.lamports / solanaWeb3.LAMPORTS_PER_SOL;
+                break;
+              }
+            }
+          }
+
+          if (transferAmount <= 0) continue;
 
           // 查找 Memo 指令
-          const memoInstr = tx.transaction.message.instructions.find(instr => 
-            instr.programId.toString() === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
+          const memoInstr = instructions.find(instr => 
+            instr.programId.equals(new solanaWeb3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'))
           );
 
           if (memoInstr && memoInstr.data) {
@@ -369,32 +381,18 @@ function createApp() {
             
             // 检查 memo 是否匹配当前钱包地址
             if (memoData === walletAddress) {
-              // 获取转账金额
-              const fromIndex = tx.transaction.message.accountKeys.findIndex(key => 
-                key.toString() === tx.transaction.message.accountKeys[0].toString()
-              );
-
-              if (fromIndex !== -1) {
-                const preBalances = tx.meta.preBalances;
-                const postBalances = tx.meta.postBalances;
-                const amount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
-
-                if (amount > 0) {
-                  console.log('Found referral transaction:', {
-                    signature: sig.signature,
-                    amount: amount,
-                    from: tx.transaction.message.accountKeys[0].toString(),
-                    memo: memoData
-                  });
-                  
-                  totalAmount += amount;
-                  transactions.push({
-                    signature: sig.signature,
-                    amount: amount,
-                    timestamp: tx.blockTime
-                  });
-                }
-              }
+              console.log('Found referral transaction:', {
+                signature: sig.signature,
+                amount: transferAmount,
+                memo: memoData
+              });
+              
+              totalAmount += transferAmount;
+              transactions.push({
+                signature: sig.signature,
+                amount: transferAmount,
+                timestamp: tx.blockTime
+              });
             }
           }
         } catch (err) {
@@ -612,17 +610,34 @@ function createApp() {
     // Stats section
     const statsSection = createElement('div', { class: 'stats-section' });
     const statsTitle = createElement('h4', { class: 'stats-title' }, 'Private Sale Through Your Link');
-    const statsValue = createElement('div', { class: 'stats-value' }, `Total: ${referralStats.totalAmount.toFixed(2)} SOL`);
-    const statsNote = createElement('div', { class: 'stats-note' }, referralStats.totalAmount > 0 ? '' : 'No private sale through your link yet');
-    
-    // Refresh button
+    const statsContainer = createElement('div', { class: 'stats-container' });
+    const totalStats = createElement('div', { class: 'total-stats' });
+    const statLabel = createElement('div', { class: 'stat-label' }, 'Total Referral Earnings:');
+    const statValue = createElement('div', { class: 'stat-value' }, `${referralStats ? referralStats.totalAmount.toFixed(2) : '0.00'} SOL`);
+    totalStats.append(statLabel, statValue);
+    statsContainer.appendChild(totalStats);
+    if (referralStats && referralStats.transactions.length > 0) {
+      const transactionsList = createElement('div', { class: 'transactions-list' });
+      const transactionsHeader = createElement('div', { class: 'transactions-header' }, 'Recent Referrals:');
+      transactionsList.appendChild(transactionsHeader);
+      referralStats.transactions.forEach(tx => {
+        const transactionItem = createElement('div', { class: 'transaction-item' });
+        const amount = createElement('span', { class: 'amount' }, `+${tx.amount.toFixed(2)} SOL`);
+        const time = createElement('span', { class: 'time' }, new Date(tx.timestamp * 1000).toLocaleString());
+        transactionItem.append(amount, time);
+        transactionsList.appendChild(transactionItem);
+      });
+      statsContainer.appendChild(transactionsList);
+    } else {
+      const noTransactions = createElement('div', { class: 'no-transactions' }, 'No private sale through your link yet');
+      statsContainer.appendChild(noTransactions);
+    }
+    statsSection.append(statsTitle, statsContainer);
     const refreshButton = createElement('button', {
         class: 'refresh-button',
         onclick: fetchReferralStats
     }, '🔄 REFRESH STATS');
-    
-    // Append all elements
-    statsSection.append(statsTitle, statsValue, statsNote, refreshButton);
+    statsSection.appendChild(refreshButton);
     referralContent.append(referralTitle, referralLink, copyButton, statsSection);
     referralSection.appendChild(referralContent);
     
