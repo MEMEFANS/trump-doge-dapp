@@ -331,82 +331,94 @@ function createApp() {
 
   // 获取推荐统计数据
   const fetchReferralStats = async () => {
-    if (!connection || !walletAddress) return;
+    if (!connection || !walletAddress) {
+      console.log('❌ 连接或钱包地址为空');
+      return;
+    }
     
     try {
-      console.log('Fetching referral stats for wallet:', walletAddress);
+      console.log('\n=== 开始获取推荐统计 ===');
+      console.log('👛 钱包地址:', walletAddress);
       
-      // 获取所有转账到私募地址的交易
+      // 获取最近的交易
       const signatures = await connection.getSignaturesForAddress(
         new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
-        { limit: 100 }
+        { 
+          limit: 1000,
+          commitment: 'confirmed'
+        }
       );
+
+      console.log(`\n找到 ${signatures.length} 笔交易`);
 
       let totalAmount = 0;
       const transactions = [];
 
-      // 处理每个交易
       for (const sig of signatures) {
         try {
-          const tx = await connection.getTransaction(sig.signature);
+          const tx = await connection.getTransaction(sig.signature, {
+            maxSupportedTransactionVersion: 0
+          });
+          
           if (!tx || !tx.meta || tx.meta.err) continue;
 
-          // 查找转账指令
-          const instructions = tx.transaction.message.instructions;
-          let transferAmount = 0;
+          // 检查转账金额
+          const preBalance = tx.meta.preBalances[0];
+          const postBalance = tx.meta.postBalances[0];
+          const amount = (preBalance - postBalance) / solanaWeb3.LAMPORTS_PER_SOL;
+          
+          if (amount <= 0) continue;
 
-          for (let i = 0; i < instructions.length; i++) {
-            const instruction = instructions[i];
-            
-            // 检查是否是系统程序的转账指令
-            if (instruction.programId.equals(solanaWeb3.SystemProgram.programId)) {
-              const decodedInstruction = solanaWeb3.SystemProgram.decodeInstruction(instruction);
-              if (decodedInstruction.type === 'transfer') {
-                transferAmount = decodedInstruction.data.lamports / solanaWeb3.LAMPORTS_PER_SOL;
-                break;
-              }
-            }
-          }
-
-          if (transferAmount <= 0) continue;
+          // 检查交易指令
+          if (!tx.transaction?.message?.instructions) continue;
 
           // 查找 Memo 指令
-          const memoInstr = instructions.find(instr => 
-            instr.programId.equals(new solanaWeb3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'))
-          );
+          for (const instr of tx.transaction.message.instructions) {
+            try {
+              if (!instr.programId) continue;
 
-          if (memoInstr && memoInstr.data) {
-            const memoData = Buffer.from(memoInstr.data).toString().trim();
-            console.log('Found memo:', memoData);
-            
-            // 检查 memo 是否匹配当前钱包地址
-            if (memoData === walletAddress) {
-              console.log('Found referral transaction:', {
-                signature: sig.signature,
-                amount: transferAmount,
-                memo: memoData
-              });
-              
-              totalAmount += transferAmount;
-              transactions.push({
-                signature: sig.signature,
-                amount: transferAmount,
-                timestamp: tx.blockTime
-              });
+              if (instr.programId.toBase58() === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr') {
+                if (!instr.data) continue;
+
+                // 解码并清理 Memo 数据
+                const memoData = Buffer.from(instr.data).toString();
+                const cleanMemoData = memoData.replace(/[^a-zA-Z0-9]/g, '');
+                const cleanWalletAddress = walletAddress.replace(/[^a-zA-Z0-9]/g, '');
+
+                console.log('比较:', {
+                  memo: cleanMemoData,
+                  wallet: cleanWalletAddress
+                });
+
+                if (cleanMemoData.toLowerCase() === cleanWalletAddress.toLowerCase()) {
+                  console.log('✅ 找到推荐交易:', {
+                    signature: sig.signature,
+                    amount: amount.toFixed(4),
+                    time: tx.blockTime ? new Date(tx.blockTime * 1000).toLocaleString() : 'unknown'
+                  });
+                  
+                  totalAmount += amount;
+                  transactions.push({
+                    signature: sig.signature,
+                    amount: amount,
+                    timestamp: tx.blockTime || Date.now() / 1000
+                  });
+                  break;
+                }
+              }
+            } catch (e) {
+              continue;
             }
           }
         } catch (err) {
-          console.error('Error processing transaction:', err);
           continue;
         }
       }
 
-      console.log('Final referral stats:', {
-        totalAmount,
-        transactionCount: transactions.length
-      });
+      console.log('\n=== 统计结果 ===');
+      console.log('总金额:', totalAmount.toFixed(4), 'SOL');
+      console.log('交易数量:', transactions.length);
 
-      // 更新推荐统计
       referralStats = {
         totalAmount: totalAmount,
         transactions: transactions.sort((a, b) => b.timestamp - a.timestamp)
@@ -414,7 +426,7 @@ function createApp() {
 
       renderApp();
     } catch (error) {
-      console.error('Error:', error);
+      console.error('获取统计时出错:', error);
     }
   };
 
