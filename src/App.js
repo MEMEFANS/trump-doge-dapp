@@ -158,41 +158,100 @@ function createApp() {
     }
   }
 
+  // 检查钱包是否已安装
+  const checkWalletAvailable = () => {
+    const { solana } = window;
+    if (!solana) {
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        // 移动端：打开钱包内置浏览器
+        window.location.href = 'https://phantom.app/ul/browse/' + window.location.href;
+      } else {
+        // PC端：提示安装钱包
+        showError('Please install Phantom Wallet from phantom.app');
+      }
+      return false;
+    }
+    return true;
+  };
+
+  // 连接钱包
   const connectWallet = async () => {
     try {
-      // Check for Solana object from Phantom wallet
-      const provider = window.solana;
-      
-      if (!provider) {
-        alert('Please install Phantom wallet!');
+      if (!checkWalletAvailable()) return;
+
+      // 检查是否已连接
+      const { solana } = window;
+      if (solana.isConnected && walletAddress) {
         return;
       }
 
-      try {
-        // Try to connect
-        const response = await provider.connect();
-        walletAddress = response.publicKey.toString();
-        console.log('Connected to wallet:', walletAddress);
-        
-        // Store provider for later use
-        window.solanaProvider = provider;
-        
-        // Fetch referral stats after connecting
-        await fetchReferralStats();
-        
-        // 获取用户私募数据
-        await fetchUserPresaleStats();
-        
-        renderApp();
-      } catch (err) {
-        console.error('Connection error:', err);
-        alert('Failed to connect wallet. Please try again!');
+      // 添加加载提示
+      const connectButton = document.querySelector('.connect-button');
+      if (connectButton) {
+        connectButton.textContent = 'Connecting...';
+        connectButton.disabled = true;
       }
+
+      // 尝试连接钱包
+      try {
+        const response = await Promise.race([
+          solana.connect(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timeout')), 10000)
+          )
+        ]);
+        
+        walletAddress = response.publicKey.toString();
+        
+        // 连接成功后获取数据
+        await Promise.all([
+          fetchReferralStats(),
+          fetchUserPresaleStats()
+        ]);
+
+      } catch (err) {
+        if (err.message === 'Connection timeout') {
+          showError('Connection timeout. Please try again.');
+        } else {
+          showError('Error connecting wallet. Please try again.');
+        }
+        console.error('Connection error:', err);
+      }
+
+      renderApp();
     } catch (error) {
-      console.error('Error:', error);
-      alert('Wallet connection failed. Please try again!');
+      showError('Error connecting wallet');
+      console.error(error);
+    } finally {
+      // 恢复按钮状态
+      const connectButton = document.querySelector('.connect-button');
+      if (connectButton) {
+        connectButton.textContent = 'Connect Wallet';
+        connectButton.disabled = false;
+      }
     }
   };
+
+  // 自动重连钱包
+  const autoReconnectWallet = async () => {
+    const { solana } = window;
+    if (solana && solana.isPhantom) {
+      try {
+        const resp = await solana.connect({ onlyIfTrusted: true });
+        walletAddress = resp.publicKey.toString();
+        await Promise.all([
+          fetchReferralStats(),
+          fetchUserPresaleStats()
+        ]);
+        renderApp();
+      } catch (err) {
+        console.log('Auto reconnect failed:', err);
+      }
+    }
+  };
+
+  // 页面加载完成后自动重连
+  window.addEventListener('load', autoReconnectWallet);
 
   // Initialize connection outside of the function
   const connection = new solanaWeb3.Connection(
@@ -216,7 +275,7 @@ function createApp() {
     try {
       // 获取所有转账到私募地址的交易
       const signatures = await connection.getSignaturesForAddress(
-        new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
+        new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
         { limit: 1000 }
       );
 
@@ -290,14 +349,20 @@ function createApp() {
         return;
       }
 
-      const recipientAddress = '4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF';
+      const recipientAddress = '4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX';
       
       try {
         // Convert amount to lamports
         const lamports = Math.floor(amount * solanaWeb3.LAMPORTS_PER_SOL);
 
         // Create transaction
-        const transaction = new solanaWeb3.Transaction();
+        const transaction = new solanaWeb3.Transaction().add(
+          solanaWeb3.SystemProgram.transfer({
+            fromPubkey: new solanaWeb3.PublicKey(walletAddress),
+            toPubkey: new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
+            lamports: lamports
+          })
+        );
 
         // Add memo instruction if there's a referral
         if (referralId) {
@@ -308,16 +373,6 @@ function createApp() {
           });
           transaction.add(memoInstruction);
         }
-
-        // Create transfer instruction
-        const transferInstruction = solanaWeb3.SystemProgram.transfer({
-          fromPubkey: new solanaWeb3.PublicKey(walletAddress),
-          toPubkey: new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
-          lamports: lamports
-        });
-
-        // Add transfer instruction
-        transaction.add(transferInstruction);
 
         // Get latest blockhash
         const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
@@ -364,63 +419,82 @@ function createApp() {
     if (!connection || !walletAddress) return;
     
     try {
+      // 添加加载提示
+      const statsSection = document.querySelector('.stats-section');
+      if (statsSection) {
+        statsSection.style.opacity = '0.5';
+      }
+
+      // 使用缓存的数据先显示
+      const cachedStats = localStorage.getItem('referralStats');
+      if (cachedStats) {
+        try {
+          referralStats = JSON.parse(cachedStats);
+          renderApp();
+        } catch (err) {
+          console.error('Error parsing cached stats:', err);
+        }
+      }
+
       // 获取所有转账到私募地址的交易
       const signatures = await connection.getSignaturesForAddress(
-        new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
+        new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
         { limit: 1000 }
       );
 
       let totalAmount = 0;
       const transactions = [];
 
-      // 处理每个交易
-      for (const sig of signatures) {
-        try {
-          const tx = await connection.getTransaction(sig.signature, {
-            maxSupportedTransactionVersion: 0
-          });
+      // 使用 Promise.all 并行处理交易
+      const processedTxs = await Promise.all(
+        signatures.map(async (sig) => {
+          try {
+            const tx = await connection.getTransaction(sig.signature, {
+              maxSupportedTransactionVersion: 0
+            });
 
-          if (!tx || !tx.meta || tx.meta.err) continue;
+            if (!tx || !tx.meta || tx.meta.err) return null;
 
-          // 获取交易的备注信息
-          const message = tx.transaction.message;
-          const memoInstr = message.instructions.find(instr => 
-            instr.programId.toString() === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
-          );
+            const message = tx.transaction.message;
+            const memoInstr = message.instructions.find(instr => 
+              instr.programId.toString() === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
+            );
 
-          if (memoInstr) {
-            const memoData = Buffer.from(memoInstr.data).toString();
-            // 检查是否包含当前用户的钱包地址作为推荐人
-            if (memoData.includes(walletAddress)) {
-              const transferInstr = message.instructions.find(instr =>
-                instr.programId.toString() === '11111111111111111111111111111111'
-              );
-
-              if (transferInstr) {
-                // 计算转账金额
-                const preBalances = tx.meta.preBalances;
-                const postBalances = tx.meta.postBalances;
-                const fromIndex = message.accountKeys.findIndex(key => 
-                  key.toString() === message.accountKeys[0].toString()
+            if (memoInstr) {
+              const memoData = Buffer.from(memoInstr.data).toString();
+              if (memoData.includes(walletAddress)) {
+                const transferInstr = message.instructions.find(instr =>
+                  instr.programId.toString() === '11111111111111111111111111111111'
                 );
-                const amount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
-                
-                // 更新总量
-                totalAmount += amount;
 
-                transactions.push({
-                  signature: sig.signature,
-                  amount: amount,
-                  timestamp: tx.blockTime
-                });
+                if (transferInstr) {
+                  const preBalances = tx.meta.preBalances;
+                  const postBalances = tx.meta.postBalances;
+                  const fromIndex = message.accountKeys.findIndex(key => 
+                    key.toString() === message.accountKeys[0].toString()
+                  );
+                  const amount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
+
+                  return {
+                    signature: sig.signature,
+                    amount: amount,
+                    timestamp: tx.blockTime
+                  };
+                }
               }
             }
+            return null;
+          } catch (err) {
+            console.error('Error processing transaction:', err);
+            return null;
           }
-        } catch (err) {
-          console.error('Error processing transaction:', err);
-          continue;
-        }
-      }
+        })
+      );
+
+      // 过滤并处理有效交易
+      const validTxs = processedTxs.filter(tx => tx !== null);
+      totalAmount = validTxs.reduce((sum, tx) => sum + tx.amount, 0);
+      transactions.push(...validTxs);
 
       // 更新统计数据
       referralStats = {
@@ -429,17 +503,21 @@ function createApp() {
       };
 
       // 保存到 localStorage
-      if (isStorageAvailable()) {
-        try {
-          localStorage.setItem('referralStats', JSON.stringify(referralStats));
-        } catch (err) {
-          console.error('Error saving referral stats:', err);
-        }
+      try {
+        localStorage.setItem('referralStats', JSON.stringify(referralStats));
+      } catch (err) {
+        console.error('Error saving referral stats:', err);
       }
 
       renderApp();
     } catch (error) {
       console.error('Error fetching referral stats:', error);
+    } finally {
+      // 恢复显示
+      const statsSection = document.querySelector('.stats-section');
+      if (statsSection) {
+        statsSection.style.opacity = '1';
+      }
     }
   };
 
