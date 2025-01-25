@@ -685,7 +685,7 @@ function createApp() {
       </div>
     `;
 
-    document.getElementById('app').innerHTML = content;
+    document.getElementById('root').innerHTML = content;
   };
 
   // Initial render
