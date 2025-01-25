@@ -336,10 +336,12 @@ function createApp() {
     if (!connection || !walletAddress) return;
     
     try {
+      console.log('Fetching referral stats for wallet:', walletAddress);
+      
       // 获取所有转账到私募地址的交易
       const signatures = await connection.getSignaturesForAddress(
         new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
-        { limit: 100 }
+        { limit: 1000 }  // 增加查询限制
       );
 
       let totalAmount = 0;
@@ -366,9 +368,11 @@ function createApp() {
 
           if (memoInstr && memoInstr.data) {
             const memoData = Buffer.from(memoInstr.data).toString();
+            console.log('Found memo:', memoData);
+            console.log('Checking against wallet:', walletAddress);
             
-            // 检查 memo 是否包含当前钱包地址
-            if (memoData.includes(walletAddress)) {
+            // 检查 memo 是否完全匹配当前钱包地址
+            if (memoData === walletAddress) {
               // 查找转账指令
               const transferInstr = message.instructions.find(instr =>
                 instr.programId && instr.programId.toString() === '11111111111111111111111111111111'
@@ -385,6 +389,12 @@ function createApp() {
                   const amount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
 
                   if (amount > 0) {
+                    console.log('Found referral transaction:', {
+                      signature: sig.signature,
+                      amount: amount,
+                      from: message.accountKeys[0].toString()
+                    });
+                    
                     totalAmount += amount;
                     transactions.push({
                       signature: sig.signature,
@@ -401,6 +411,11 @@ function createApp() {
           continue;
         }
       }
+
+      console.log('Final referral stats:', {
+        totalAmount,
+        transactionCount: transactions.length
+      });
 
       // 更新推荐统计
       referralStats = {
@@ -612,7 +627,6 @@ function createApp() {
     const statsSection = createElement('div', { class: 'stats-section' });
     const statsTitle = createElement('h4', { class: 'stats-title' }, 'Private Sale Through Your Link');
     const statsValue = createElement('div', { class: 'stats-value' }, `Total: ${referralStats.totalAmount.toFixed(2)} SOL`);
-    const statsTokenValue = createElement('div', { class: 'stats-token-value' }, `≈ ${(referralStats.totalAmount * 225000).toLocaleString()} TDOGE`);
     const statsNote = createElement('div', { class: 'stats-note' }, referralStats.totalAmount > 0 ? '' : 'No private sale through your link yet');
     
     // Refresh button
@@ -622,7 +636,7 @@ function createApp() {
     }, '🔄 REFRESH STATS');
     
     // Append all elements
-    statsSection.append(statsTitle, statsValue, statsTokenValue, statsNote, refreshButton);
+    statsSection.append(statsTitle, statsValue, statsNote, refreshButton);
     referralContent.append(referralTitle, referralLink, copyButton, statsSection);
     referralSection.appendChild(referralContent);
     
