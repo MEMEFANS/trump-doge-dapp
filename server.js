@@ -3,12 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const server = http.createServer((req, res) => {
-    let filePath = '.' + req.url;
-    if (filePath === './') {
-        filePath = './public/index.html';
-    } else if (filePath === './src/App.js') {
-        filePath = './src/App.js';
-    }
+    let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
 
     const extname = String(path.extname(filePath)).toLowerCase();
     const mimeTypes = {
