@@ -277,6 +277,8 @@ function createApp() {
         { limit: 100 }
       );
 
+      console.log(`\n找到 ${signatures.length} 笔交易`);
+
       let totalSol = 0;
 
       // 处理每个交易
@@ -329,6 +331,26 @@ function createApp() {
     return solAmount * 225000;
   };
 
+  // 添加 Memo 数据
+  const addReferralMemo = async () => {
+    if (!walletAddress) return;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get('ref');
+    
+    if (ref) {
+      try {
+        // 验证推荐人地址
+        const refPubkey = new solanaWeb3.PublicKey(ref);
+        console.log('添加推荐 Memo:', refPubkey.toBase58());
+        memoStr = refPubkey.toBase58();
+      } catch (e) {
+        console.error('无效的推荐地址:', e);
+        memoStr = '';
+      }
+    }
+  };
+
   // 获取推荐统计数据
   const fetchReferralStats = async () => {
     if (!connection || !walletAddress) {
@@ -358,12 +380,24 @@ function createApp() {
         try {
           console.log('\n检查交易:', sig.signature);
           
+          // 使用 confirmed commitment 获取交易
           const tx = await connection.getTransaction(sig.signature, {
-            maxSupportedTransactionVersion: 0
+            maxSupportedTransactionVersion: 0,
+            commitment: 'confirmed'
           });
           
-          if (!tx || !tx.meta || tx.meta.err) {
-            console.log('交易无效');
+          if (!tx) {
+            console.log('交易未确认');
+            continue;
+          }
+
+          if (!tx.meta) {
+            console.log('交易meta为空');
+            continue;
+          }
+
+          if (tx.meta.err) {
+            console.log('交易失败:', tx.meta.err);
             continue;
           }
 
@@ -371,11 +405,14 @@ function createApp() {
           const preBalance = tx.meta.preBalances[0];
           const postBalance = tx.meta.postBalances[0];
           const amount = (preBalance - postBalance) / solanaWeb3.LAMPORTS_PER_SOL;
+          const roundedAmount = Math.floor(amount * 10) / 10; // 向下取整到0.1位
           
           console.log('转账金额:', amount.toFixed(4), 'SOL');
+          console.log('保留1位小数:', roundedAmount.toFixed(1), 'SOL');
           
-          if (amount <= 0) {
-            console.log('金额无效');
+          // 检查是否大于等于0.1 SOL
+          if (roundedAmount < 0.1) {
+            console.log('金额小于 0.1 SOL');
             continue;
           }
 
@@ -402,7 +439,6 @@ function createApp() {
                 console.log('Memo内容:', memoData);
                 console.log('当前钱包:', walletAddress);
 
-                // 检查是否为有效的钱包地址
                 try {
                   const memoPubkey = new solanaWeb3.PublicKey(memoData);
                   const walletPubkey = new solanaWeb3.PublicKey(walletAddress);
@@ -411,29 +447,32 @@ function createApp() {
                     console.log('✅ 找到推荐交易!');
                     console.log('详情:', {
                       signature: sig.signature,
-                      amount: amount.toFixed(4),
+                      originalAmount: amount.toFixed(4),
+                      roundedAmount: roundedAmount.toFixed(1),
                       time: tx.blockTime ? new Date(tx.blockTime * 1000).toLocaleString() : 'unknown'
                     });
                     
-                    totalAmount += amount;
+                    totalAmount += roundedAmount; // 使用四舍五入后的金额
                     transactions.push({
                       signature: sig.signature,
-                      amount: amount,
+                      amount: roundedAmount, // 使用四舍五入后的金额
                       timestamp: tx.blockTime || Date.now() / 1000
                     });
                     
                     foundMemo = true;
                     break;
                   } else {
-                    console.log('❌ 钱包地址不匹配');
+                    console.log('❌ Memo地址与钱包不匹配');
+                    console.log('Memo地址:', memoPubkey.toBase58());
+                    console.log('钱包地址:', walletPubkey.toBase58());
                   }
                 } catch (e) {
-                  console.log('❌ 无效的钱包地址');
+                  console.log('❌ Memo不是有效的钱包地址:', e.message);
                   continue;
                 }
               }
             } catch (e) {
-              console.log('处理指令出错:', e);
+              console.log('处理指令出错:', e.message);
               continue;
             }
           }
@@ -443,7 +482,7 @@ function createApp() {
           }
 
         } catch (err) {
-          console.error('处理交易出错:', err);
+          console.error('处理交易出错:', err.message);
           continue;
         }
       }
@@ -459,7 +498,7 @@ function createApp() {
 
       renderApp();
     } catch (error) {
-      console.error('获取统计时出错:', error);
+      console.error('获取统计出错:', error.message);
     }
   };
 
@@ -547,364 +586,106 @@ function createApp() {
   };
 
   const renderApp = () => {
-    const root = document.getElementById('root');
-    root.innerHTML = '';
+    const statsHtml = referralStats ? `
+      <div class="text-center mt-4">
+        <h4>Your Private Sale Stats</h4>
+        <p>
+          Total Referral Earnings: ${referralStats.totalAmount.toFixed(1)} SOL
+        </p>
+        ${referralStats.transactions.length > 0 ? `
+          <div class="mt-3">
+            <h5>Recent Referral Transactions:</h5>
+            ${referralStats.transactions.map(tx => `
+              <div class="mt-2">
+                <small>Amount: ${tx.amount.toFixed(1)} SOL</small><br>
+                <small>Time: ${new Date(tx.timestamp * 1000).toLocaleString()}</small>
+              </div>
+            `).join('')}
+          </div>
+        ` : '<p>No private sale through your link yet</p>'}
+      </div>
+    ` : '';
 
-    // Create main container
-    const container = createElement('div', { class: 'container' });
+    const content = `
+      <div class="container">
+        <div class="text-center py-4">
+          <h1>TRUMP DOGE 2025</h1>
+          <h2>CRYPTO IS GREAT AGAIN! 🚀</h2>
+          <p>Official Crypto of the Trump Administration</p>
+        </div>
 
-    // Create logo section
-    const logoSection = createElement('div', { class: 'logo-section' });
-    const title = createElement('h1', {}, 'TRUMP DOGE 2025');
-    const slogan = createElement('h2', {}, 'CRYPTO IS GREAT AGAIN! 🚀');
-    const subtitle = createElement('p', {}, 'Official Crypto of the Trump Administration');
-    logoSection.append(title, slogan, subtitle);
-    container.appendChild(logoSection);
+        <div class="row justify-content-center">
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-6">
+                    <div class="text-center mb-4">
+                      <h5>PRIVATE SALE ALLOCATION</h5>
+                      <h2>45%</h2>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="text-center mb-4">
+                      <h5>MIN INVESTMENT</h5>
+                      <h2>0.1 SOL</h2>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-6">
+                    <div class="text-center">
+                      <h5>TOTAL SUPPLY</h5>
+                      <h2>10,000,000,000 TDOGE</h2>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="text-center">
+                      <h5>PRICE</h5>
+                      <h2>1 SOL = ${calculateTokens(1)} TDOGE</h2>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-    // Create info grid
-    const infoGrid = createElement('div', { class: 'info-grid' });
-    
-    // Price info
-    const priceBox = createElement('div', { class: 'info-box' });
-    const priceTitle = createElement('div', { class: 'info-title' }, 'PRICE');
-    const priceValue = createElement('div', { class: 'info-value' }, '1 SOL = 225,000 TDOGE');
-    priceBox.append(priceTitle, priceValue);
+            ${walletAddress ? `
+              <div class="card mb-4">
+                <div class="card-body">
+                  <p class="text-center mb-2">Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}</p>
+                  <div class="form-group">
+                    <input type="number" class="form-control text-center mb-3" value="0.1" step="0.1" min="0.1" id="amount" />
+                  </div>
+                  <button class="btn btn-warning btn-lg w-100" onclick="handleDonate()">CONTRIBUTE NOW</button>
+                </div>
+              </div>
 
-    // Min investment info
-    const minBox = createElement('div', { class: 'info-box' });
-    const minTitle = createElement('div', { class: 'info-title' }, 'MIN INVESTMENT');
-    const minValue = createElement('div', { class: 'info-value' }, '0.1 SOL');
-    minBox.append(minTitle, minValue);
+              <div class="card mb-4">
+                <div class="card-body">
+                  <h4 class="text-center mb-3">YOUR REFERRAL LINK</h4>
+                  <div class="input-group mb-3">
+                    <input type="text" class="form-control" readonly value="${generateReferralLink()}" id="referral-link" />
+                    <button class="btn btn-success" onclick="copyReferralLink()">
+                      📋 COPY REFERRAL LINK
+                    </button>
+                  </div>
+                  <p class="text-center text-success mb-0">Private Sale Through Your Link</p>
+                  ${statsHtml}
+                </div>
+              </div>
+            ` : `
+              <div class="card mb-4">
+                <div class="card-body text-center">
+                  <button class="btn btn-lg btn-primary" onclick="connectWallet()">Connect Wallet</button>
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
 
-    // Total supply info
-    const supplyBox = createElement('div', { class: 'info-box' });
-    const supplyTitle = createElement('div', { class: 'info-title' }, 'TOTAL SUPPLY');
-    const supplyValue = createElement('div', { class: 'info-value' }, '10,000,000,000 TDOGE');
-    supplyBox.append(supplyTitle, supplyValue);
-
-    // Private sale allocation info
-    const allocBox = createElement('div', { class: 'info-box' });
-    const allocTitle = createElement('div', { class: 'info-title' }, 'PRIVATE SALE ALLOCATION');
-    const allocValue = createElement('div', { class: 'info-value' }, '45%');
-    allocBox.append(allocTitle, allocValue);
-
-    infoGrid.append(allocBox, minBox, supplyBox, priceBox);
-    container.appendChild(infoGrid);
-
-    // Create referral section
-    const referralSection = createElement('div', { class: 'referral-container' });
-    
-    // Create fundraising input section first
-    const fundraisingInput = createElement('div', { class: 'fundraising-input' });
-    
-    // Wallet status
-    if (window.solana?.publicKey) {
-        const walletStatus = createElement('div', { class: 'wallet-status' },
-            'Connected: ' + window.solana.publicKey.toString().slice(0, 6) + '...' + window.solana.publicKey.toString().slice(-4)
-        );
-        fundraisingInput.appendChild(walletStatus);
-        
-        // Input container
-        const inputContainer = createElement('div', { class: 'input-container' });
-        const amountInput = createElement('input', {
-            type: 'number',
-            placeholder: 'Amount (SOL)',
-            min: '0.1',
-            step: '0.1',
-            value: amount,
-            onchange: (e) => { amount = e.target.value; }
-        });
-        
-        // Contribute button
-        const contributeButton = createElement('button', {
-            class: 'contribute-button',
-            onclick: handleDonate
-        }, 'CONTRIBUTE NOW');
-        
-        inputContainer.appendChild(amountInput);
-        inputContainer.appendChild(contributeButton);
-        fundraisingInput.appendChild(inputContainer);
-    } else {
-        const connectButton = createElement('button', {
-            class: 'connect-button',
-            onclick: connectWallet
-        }, 'CONNECT WALLET');
-        fundraisingInput.appendChild(connectButton);
-    }
-    
-    // Add fundraising input to referral section
-    referralSection.appendChild(fundraisingInput);
-    
-    // Create referral content
-    const referralContent = createElement('div', { class: 'referral-content' });
-    
-    // Referral title
-    const referralTitle = createElement('h3', { class: 'referral-title' }, 'YOUR REFERRAL LINK');
-    
-    // Referral link
-    const referralLink = createElement('div', { class: 'referral-link' },
-        generateReferralLink()
-    );
-    
-    // Copy button
-    const copyButton = createElement('button', {
-        class: 'copy-button',
-        onclick: copyReferralLink
-    }, '📋 COPY REFERRAL LINK');
-    
-    // Stats section
-    const statsSection = createElement('div', { class: 'stats-section' });
-    const statsTitle = createElement('h4', { class: 'stats-title' }, 'Private Sale Through Your Link');
-    const statsContainer = createElement('div', { class: 'stats-container' });
-    const totalStats = createElement('div', { class: 'total-stats' });
-    const statLabel = createElement('div', { class: 'stat-label' }, 'Total Referral Earnings:');
-    const statValue = createElement('div', { class: 'stat-value' }, `${referralStats ? referralStats.totalAmount.toFixed(2) : '0.00'} SOL`);
-    totalStats.append(statLabel, statValue);
-    statsContainer.appendChild(totalStats);
-    if (referralStats && referralStats.transactions.length > 0) {
-      const transactionsList = createElement('div', { class: 'transactions-list' });
-      const transactionsHeader = createElement('div', { class: 'transactions-header' }, 'Recent Referrals:');
-      transactionsList.appendChild(transactionsHeader);
-      referralStats.transactions.forEach(tx => {
-        const transactionItem = createElement('div', { class: 'transaction-item' });
-        const amount = createElement('span', { class: 'amount' }, `+${tx.amount.toFixed(2)} SOL`);
-        const time = createElement('span', { class: 'time' }, new Date(tx.timestamp * 1000).toLocaleString());
-        transactionItem.append(amount, time);
-        transactionsList.appendChild(transactionItem);
-      });
-      statsContainer.appendChild(transactionsList);
-    } else {
-      const noTransactions = createElement('div', { class: 'no-transactions' }, 'No private sale through your link yet');
-      statsContainer.appendChild(noTransactions);
-    }
-    statsSection.append(statsTitle, statsContainer);
-    const refreshButton = createElement('button', {
-        class: 'refresh-button',
-        onclick: fetchReferralStats
-    }, '🔄 REFRESH STATS');
-    statsSection.appendChild(refreshButton);
-    referralContent.append(referralTitle, referralLink, copyButton, statsSection);
-    referralSection.appendChild(referralContent);
-    
-    // Create user presale stats section
-    const userPresaleStatsSection = createElement('div', { class: 'user-presale-stats-section' });
-    const userPresaleStatsTitle = createElement('h4', { class: 'user-presale-stats-title' }, 'Your Private Sale Stats');
-    const userPresaleStatsValue = createElement('div', { class: 'user-presale-stats-value' }, `Your Private Sale Contribution: ${userPresaleStats.solAmount.toFixed(2)} SOL`);
-    const userPresaleStatsTokenValue = createElement('div', { class: 'user-presale-stats-token-value' }, `Your Private Sale Tokens: ${userPresaleStats.tokenAmount} TDOGE`);
-    userPresaleStatsSection.append(userPresaleStatsTitle, userPresaleStatsValue, userPresaleStatsTokenValue);
-    referralSection.appendChild(userPresaleStatsSection);
-    
-    container.appendChild(referralSection);
-
-    // Create main features section
-    const mainFeaturesSection = createElement('div', { class: 'main-features-section' });
-    mainFeaturesSection.appendChild(
-      createElement('h3', { class: 'section-title' }, 'The People\'s Crypto')
-    );
-
-    const mainFeatures = [
-      {
-        title: 'Presidential Partnership',
-        description: '50% tokens dedicated to Trump Foundation initiatives - Making America and Crypto Great Again!'
-      },
-      {
-        title: 'Revolutionary Growth Model',
-        description: 'Innovative 500% price increase unlocking mechanism - Proven success in the Trump era'
-      },
-      {
-        title: 'America First Crypto',
-        description: 'Built on Solana - Fast, secure, and energy-efficient American technology'
-      },
-      {
-        title: 'Patriot Community',
-        description: 'Join millions of patriots in the fastest-growing crypto community'
-      }
-    ];
-
-    const mainFeaturesList = createElement('div', { class: 'features-list' });
-    mainFeatures.forEach(feature => {
-      const featureCard = createElement('div', { class: 'feature-card' });
-      featureCard.appendChild(
-        createElement('h4', { class: 'feature-title' }, feature.title)
-      );
-      featureCard.appendChild(
-        createElement('p', { class: 'feature-description' }, feature.description)
-      );
-      mainFeaturesList.appendChild(featureCard);
-    });
-    mainFeaturesSection.appendChild(mainFeaturesList);
-
-    // Add achievement banner
-    const achievementBanner = createElement('div', { class: 'achievement-banner' });
-    achievementBanner.appendChild(
-      createElement('h3', { class: 'achievement-title' }, '🏆 TRUMP DOGE Achievements')
-    );
-
-    const achievements = [
-      'Fastest Growing Crypto of 2025',
-      'Official Partner of Trump Foundation',
-      'Over 1 Million Patriot Holders',
-      'Most Secure Token Launch of 2025'
-    ];
-
-    achievements.forEach(achievement => {
-      achievementBanner.appendChild(
-        createElement('div', { class: 'achievement-item' }, `✓ ${achievement}`)
-      );
-    });
-
-    mainFeaturesSection.appendChild(achievementBanner);
-    container.appendChild(mainFeaturesSection);
-
-    // Project description
-    const description = createElement('div', { class: 'description-section' });
-    description.appendChild(
-      createElement('h2', { class: 'description-title' }, 'About TRUMP DOGE')
-    );
-    description.appendChild(
-      createElement('p', { class: 'description-text' }, 
-        'TRUMP DOGE is the most tremendous, absolutely fantastic fusion of two legendary meme communities. We\'re combining the unstoppable energy of DOGE with the winning spirit of TRUMP to create something truly spectacular!'
-      )
-    );
-    description.appendChild(
-      createElement('p', { class: 'description-text' }, 
-        'Our mission is simple: We\'re going to make crypto great again, and we\'re going to make it greater than ever before! 🚀'
-      )
-    );
-
-    // Key Features section
-    const descriptionFeatures = [
-      {
-        title: 'HUGE Community Power',
-        description: 'Join the strongest and most passionate community in crypto. We have the best people, absolutely the best!'
-      },
-      {
-        title: 'TREMENDOUS Security',
-        description: 'Built with the most secure and reliable blockchain technology. Nobody does security better than us!'
-      },
-      {
-        title: 'INCREDIBLE Growth',
-        description: 'Our token price only goes up, it\'s true! The gains are going to be beautiful, believe me!'
-      },
-      {
-        title: 'AMAZING Team',
-        description: 'We have assembled the greatest team in crypto. These people are incredible, they\'re winners!'
-      }
-    ];
-
-    const descriptionFeaturesList = createElement('div', { class: 'description-features-list' });
-    descriptionFeatures.forEach(feature => {
-      const featureCard = createElement('div', { class: 'description-feature-card' });
-      featureCard.appendChild(
-        createElement('h4', { class: 'description-feature-title' }, feature.title)
-      );
-      featureCard.appendChild(
-        createElement('p', { class: 'description-feature-text' }, feature.description)
-      );
-      descriptionFeaturesList.appendChild(featureCard);
-    });
-    description.appendChild(descriptionFeaturesList);
-
-    // Add tokenomics section
-    const tokenomics = createElement('div', { class: 'tokenomics-section' });
-    tokenomics.appendChild(
-      createElement('h3', { class: 'tokenomics-title' }, 'TRUMP DOGE Tokenomics')
-    );
-
-    const tokenomicsDetails = [
-      'Total Supply: 10,000,000,000 $TRUMPDOGE',
-      'Private Sale: 45%',
-      'Liquidity Pool: 5%',
-      'Trump Foundation: 50%'
-    ];
-
-    const tokenomicsList = createElement('div', { class: 'tokenomics-list' });
-    tokenomicsDetails.forEach(detail => {
-      tokenomicsList.appendChild(
-        createElement('div', { class: 'tokenomics-item' }, `🔥 ${detail}`)
-      );
-    });
-    tokenomics.appendChild(tokenomicsList);
-
-    // Add vesting schedule
-    const vestingSchedule = createElement('div', { class: 'vesting-schedule' });
-    vestingSchedule.appendChild(
-      createElement('h3', { class: 'vesting-title' }, 'Vesting Schedule')
-    );
-
-    const vestingDetails = [
-      'Launch: 4.5% Unlock',
-      '1% Unlock per 500% Price Increase'
-    ];
-
-    vestingDetails.forEach(detail => {
-      vestingSchedule.appendChild(
-        createElement('div', { class: 'vesting-item' }, `🚀 ${detail}`)
-      );
-    });
-    tokenomics.appendChild(vestingSchedule);
-    description.appendChild(tokenomics);
-
-    // Add roadmap
-    const roadmap = createElement('div', { class: 'roadmap-section' });
-    roadmap.appendChild(
-      createElement('h3', { class: 'roadmap-title' }, 'The Greatest Roadmap Ever')
-    );
-
-    const roadmapPhases = [
-      'Phase 1: Launch & Community Building 🚀',
-      'Phase 2: Exchange Listings & Partnerships 🤝',
-      'Phase 3: TRUMP DOGE Ecosystem Expansion 🌟'
-    ];
-
-    roadmapPhases.forEach(phase => {
-      roadmap.appendChild(
-        createElement('p', { class: 'roadmap-item' }, phase)
-      );
-    });
-
-    description.appendChild(roadmap);
-    container.appendChild(description);
-
-    // Add social links section at the bottom
-    const socialLinks = createElement('div', { class: 'social-links-container' });
-    
-    const communityText = createElement('div', { class: 'community-text' }, 'JOIN COMMUNITY');
-    const socialIconsContainer = createElement('div', { class: 'social-links' });
-    
-    // Twitter/X link
-    const xLink = createElement('a', { 
-      class: 'social-link',
-      href: 'https://x.com/TRUMPDogecoin_',
-      target: '_blank',
-      rel: 'noopener noreferrer'
-    });
-    const xIcon = createElement('img', {
-      class: 'social-icon',
-      src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIzNi43NDggNDEuOTU1TDE1MS4zMjkgMTQ1LjE5TDIzOC45NDEgMjU4LjA0NUgxOTYuNjE4TDEzNy45NjEgMTgwLjA3NEw3MC4yNjQ1IDI1OC4wNDVIMjQuNjIwNkwxMTQuOTg4IDE0OS4wMTlMMzEuMTcxNyA0MS45NTVINzQuNzE1Mkw xMjcuNzIyIDExMy40NzFMMTkwLjg4NCA0MS45NTVIMjM2Ljc0OFoiIGZpbGw9IiNGRkZGRkYiLz48L3N2Zz4=',
-      alt: 'X (Twitter) Icon'
-    });
-    xLink.appendChild(xIcon);
-    
-    // Telegram link
-    const telegramLink = createElement('a', { 
-      class: 'social-link',
-      href: 'https://t.me/TDOGE1',
-      target: '_blank',
-      rel: 'noopener noreferrer'
-    });
-    const telegramIcon = createElement('img', {
-      class: 'social-icon',
-      src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTkuNzggMTguNjVMOS45NiAxNC4zTDkuOTYgMTQuM0wxNy4wOSA3Ljk3QzE3LjQyIDcuNjggMTcuMDIgNy41MyAxNi41OSA3Ljc5TDcuODEgMTMuMDlMMy41NiAxMS43NUMzLjU2IDExLjc1IDIuNjQgMTEuNDYgMi42NCAxMC43NUMyLjY0IDEwLjE3IDMuNzcgOS44NSA0LjM4IDkuNjJMNS4wNCA5LjM3TDE4Ljc2IDMuODRDMTguNzYgMy44NCAyMi41IDIuNDEgMjIuNSA0Ljk1QzIyLjUgNS45NSAyMS44OCA2LjM3IDIxLjg4IDYuMzdMMjEuODggNi4zN0wxOC4yOSAxOC4zMUMxOC4yOSAxOC4zMSAxNy44NSAxOS42MSAxNi42NSAxOS42MUMxNS42IDE5LjYxIDE0LjgzIDE4LjkyIDE0LjgzIDE4LjkyTDE0LjgzIDE4LjkyTDExLjQyIDE2LjQxTDkuNzggMTguNjVaIi8+PC9zdmc+',
-      alt: 'Telegram Icon'
-    });
-    telegramLink.appendChild(telegramIcon);
-    
-    socialIconsContainer.append(xLink, telegramLink);
-    socialLinks.append(communityText, socialIconsContainer);
-    container.appendChild(socialLinks);
-
-    root.appendChild(container);
+    document.getElementById('app').innerHTML = content;
   };
 
   // Initial render
