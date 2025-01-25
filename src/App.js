@@ -305,14 +305,73 @@ function createApp() {
     }
   }
 
+  // 获取用户私募数据
+  const fetchUserPresaleStats = async () => {
+    try {
+      if (!connection || !walletAddress) {
+        console.log('No connection or wallet');
+        return;
+      }
+
+      // 预售地址
+      const presaleAddress = new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF');
+      
+      // 获取所有交易
+      const signatures = await connection.getSignaturesForAddress(
+        presaleAddress,
+        { limit: 100 }
+      );
+
+      let totalSol = 0;
+
+      // 处理每个交易
+      for (const sigInfo of signatures) {
+        try {
+          const tx = await connection.getTransaction(sigInfo.signature, {
+            maxSupportedTransactionVersion: 0
+          });
+
+          if (!tx || !tx.meta) continue;
+
+          // 检查是否是当前用户的交易
+          const fromAddress = tx.transaction.message.accountKeys[0].toString();
+          
+          if (fromAddress === walletAddress) {
+            // 获取转账金额
+            const preBalance = tx.meta.preBalances[0] || 0;
+            const postBalance = tx.meta.postBalances[0] || 0;
+            const change = (preBalance - postBalance) / solanaWeb3.LAMPORTS_PER_SOL;
+            
+            // 如果是转出交易，累加金额
+            if (change > 0) {
+              totalSol += change;
+            }
+          }
+        } catch (err) {
+          continue;
+        }
+      }
+
+      // 更新状态，1 SOL = 225,000 TDOGE
+      userPresaleStats = {
+        solAmount: totalSol,
+        tokenAmount: totalSol * 225000
+      };
+
+      renderApp();
+    } catch (error) {
+      console.error('Error:', error);
+      userPresaleStats = {
+        solAmount: 0,
+        tokenAmount: 0
+      };
+      renderApp();
+    }
+  };
+
   // 计算代币数量
   const calculateTokens = (solAmount) => {
-    // 将 SOL 金额向下取整到最近的 0.1
-    const roundedSol = Math.floor(solAmount * 10) / 10;
-    // 计算有多少个 0.1 SOL
-    const units = Math.floor(roundedSol / 0.1);
-    // 每 0.1 SOL = 22500 TDOGE
-    return units * 22500;
+    return solAmount * 225000;
   };
 
   // 处理私募
@@ -331,9 +390,6 @@ function createApp() {
         return;
       }
 
-      // 将金额向下取整到最近的0.1
-      const roundedAmount = Math.floor(amountValue * 10) / 10;
-
       const transaction = new solanaWeb3.Transaction();
       
       // 添加转账指令
@@ -341,7 +397,7 @@ function createApp() {
         solanaWeb3.SystemProgram.transfer({
           fromPubkey: new solanaWeb3.PublicKey(walletAddress),
           toPubkey: new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
-          lamports: Math.floor(roundedAmount * solanaWeb3.LAMPORTS_PER_SOL)
+          lamports: Math.floor(amountValue * solanaWeb3.LAMPORTS_PER_SOL)
         })
       );
 
@@ -391,78 +447,6 @@ function createApp() {
       } else {
         showError('Transaction failed. Please try again.');
       }
-    }
-  };
-
-  // 获取用户私募数据
-  const fetchUserPresaleStats = async () => {
-    try {
-      if (!connection || !walletAddress) {
-        return;
-      }
-
-      // 预售地址
-      const presaleAddress = new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF');
-      
-      // 获取所有交易
-      const signatures = await connection.getSignaturesForAddress(
-        presaleAddress,
-        { limit: 1000 }
-      );
-
-      let totalSol = 0;
-      
-      // 处理每个交易
-      for (const sigInfo of signatures) {
-        try {
-          const tx = await connection.getTransaction(sigInfo.signature, {
-            maxSupportedTransactionVersion: 0
-          });
-
-          if (!tx || !tx.meta || tx.meta.err) continue;
-
-          // 查找从用户钱包到预售地址的转账
-          const postBalances = tx.meta.postBalances;
-          const preBalances = tx.meta.preBalances;
-          const accountKeys = tx.transaction.message.accountKeys;
-          
-          const senderIndex = accountKeys.findIndex(
-            key => key.toString() === walletAddress
-          );
-          const receiverIndex = accountKeys.findIndex(
-            key => key.toString() === presaleAddress.toString()
-          );
-
-          if (senderIndex === -1 || receiverIndex === -1) continue;
-
-          // 计算转账金额并向下取整到0.1
-          const solAmount = (preBalances[senderIndex] - postBalances[senderIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
-          const roundedAmount = Math.floor(solAmount * 10) / 10;
-          
-          // 只计算大于等于0.1 SOL的转账
-          if (roundedAmount >= 0.1) {
-            totalSol += roundedAmount;
-          }
-        } catch (err) {
-          console.error('Error processing transaction:', err);
-        }
-      }
-
-      // 计算代币数量：每0.1 SOL = 22500 TDOGE
-      const tokenAmount = Math.floor(totalSol / 0.1) * 22500;
-
-      // 保存用户私募统计
-      userPresaleStats = {
-        solAmount: Math.floor(totalSol * 10) / 10, // 保留一位小数
-        tokenAmount: tokenAmount
-      };
-
-      // 更新显示
-      renderApp();
-
-    } catch (error) {
-      console.error('Error fetching user presale stats:', error);
-      showError('Failed to fetch your contribution stats');
     }
   };
 
@@ -564,7 +548,7 @@ function createApp() {
 
       // 更新状态
       const newStats = {
-        totalAmount: Math.floor(totalAmount * 10) / 10, // 保留一位小数
+        totalAmount: Number(totalAmount.toFixed(2)),
         transactions: transactions.sort((a, b) => b.timestamp - a.timestamp)
       };
       
@@ -690,7 +674,7 @@ function createApp() {
     const statsContainer = createElement('div', { class: 'stats-container' });
     const totalStats = createElement('div', { class: 'total-stats' });
     const statLabel = createElement('div', { class: 'stat-label' }, 'Total Referral Earnings:');
-    const statValue = createElement('div', { class: 'stat-value' }, `${referralStats ? referralStats.totalAmount.toFixed(0) : '0'} SOL`);
+    const statValue = createElement('div', { class: 'stat-value' }, `${referralStats ? referralStats.totalAmount.toFixed(1) : '0.0'} SOL`);
     totalStats.append(statLabel, statValue);
     statsContainer.appendChild(totalStats);
     if (referralStats && referralStats.transactions.length > 0) {
@@ -699,7 +683,7 @@ function createApp() {
       transactionsList.appendChild(transactionsHeader);
       referralStats.transactions.forEach(tx => {
         const transactionItem = createElement('div', { class: 'transaction-item' });
-        const amount = createElement('span', { class: 'amount' }, `+${tx.amount.toFixed(0)} SOL`);
+        const amount = createElement('span', { class: 'amount' }, `+${tx.amount.toFixed(1)} SOL`);
         const time = createElement('span', { class: 'time' }, new Date(tx.timestamp * 1000).toLocaleString());
         transactionItem.append(amount, time);
         transactionsList.appendChild(transactionItem);
@@ -721,7 +705,7 @@ function createApp() {
     // Create user presale stats section
     const userPresaleStatsSection = createElement('div', { class: 'user-presale-stats-section' });
     const userPresaleStatsTitle = createElement('h4', { class: 'user-presale-stats-title' }, 'Your Private Sale Stats');
-    const userPresaleStatsValue = createElement('div', { class: 'user-presale-stats-value' }, `Your Private Sale Contribution: ${userPresaleStats.solAmount.toFixed(0)} SOL`);
+    const userPresaleStatsValue = createElement('div', { class: 'user-presale-stats-value' }, `Your Private Sale Contribution: ${userPresaleStats.solAmount.toFixed(1)} SOL`);
     const userPresaleStatsTokenValue = createElement('div', { class: 'user-presale-stats-token-value' }, `Your Private Sale Tokens: ${userPresaleStats.tokenAmount} TDOGE`);
     userPresaleStatsSection.append(userPresaleStatsTitle, userPresaleStatsValue, userPresaleStatsTokenValue);
     referralSection.appendChild(userPresaleStatsSection);
