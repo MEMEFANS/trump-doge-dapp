@@ -313,8 +313,8 @@ function createApp() {
         return;
       }
 
-      // 私募合约地址
-      const presaleAddress = new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX');
+      // 预售地址
+      const presaleAddress = new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF');
       
       // 获取所有交易
       const signatures = await connection.getSignaturesForAddress(
@@ -396,7 +396,7 @@ function createApp() {
       transaction.add(
         solanaWeb3.SystemProgram.transfer({
           fromPubkey: new solanaWeb3.PublicKey(walletAddress),
-          toPubkey: new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX'),
+          toPubkey: new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
           lamports: Math.floor(amountValue * solanaWeb3.LAMPORTS_PER_SOL)
         })
       );
@@ -461,7 +461,7 @@ function createApp() {
       console.log('Fetching referral stats for wallet:', walletAddress);
 
       // 收款地址
-      const receiverAddress = new solanaWeb3.PublicKey('4FU4rwed2zZAzqmn5FJYZ6oteGxdZrozamvYVAjTvopX');
+      const receiverAddress = new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF');
       
       // 获取所有转账到该地址的交易
       let signatures = await retryRpcRequest(async () => {
