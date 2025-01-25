@@ -27,6 +27,10 @@ function createApp() {
     totalAmount: 0,
     transactions: []
   };
+  let userPresaleStats = {
+    solAmount: 0,
+    tokenAmount: 0
+  };
 
   // Check if localStorage is available
   const isStorageAvailable = () => {
@@ -176,6 +180,9 @@ function createApp() {
         // Fetch referral stats after connecting
         await fetchReferralStats();
         
+        // 获取用户私募数据
+        await fetchUserPresaleStats();
+        
         renderApp();
       } catch (err) {
         console.error('Connection error:', err);
@@ -195,6 +202,71 @@ function createApp() {
       wsEndpoint: "wss://black-lingering-fog.solana-mainnet.quiknode.pro/4d7783df09fe07db6ce511d870249fc3eb642683"
     }
   );
+
+  // 计算代币数量
+  function calculateTokens(solAmount) {
+    // 1 SOL = 225,000 TDOGE
+    return solAmount * 225000;
+  }
+
+  // 获取用户私募数据
+  const fetchUserPresaleStats = async () => {
+    if (!connection || !walletAddress) return;
+    
+    try {
+      // 获取所有转账到私募地址的交易
+      const signatures = await connection.getSignaturesForAddress(
+        new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
+        { limit: 1000 }
+      );
+
+      let totalSol = 0;
+
+      // 处理每个交易
+      for (const sig of signatures) {
+        try {
+          const tx = await connection.getTransaction(sig.signature, {
+            maxSupportedTransactionVersion: 0
+          });
+
+          if (!tx || !tx.meta || tx.meta.err) continue;
+
+          // 检查是否是当前用户的交易
+          const fromAddress = tx.transaction.message.accountKeys[0].toString();
+          if (fromAddress !== walletAddress) continue;
+
+          // 找到转账指令
+          const transferInstr = tx.transaction.message.instructions.find(instr =>
+            instr.programId.toString() === '11111111111111111111111111111111'
+          );
+
+          if (transferInstr) {
+            // 获取转账金额
+            const preBalances = tx.meta.preBalances;
+            const postBalances = tx.meta.postBalances;
+            const fromIndex = tx.transaction.message.accountKeys.findIndex(key => 
+              key.toString() === walletAddress
+            );
+            const solAmount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
+            totalSol += solAmount;
+          }
+        } catch (err) {
+          console.error('Error processing transaction:', err);
+          continue;
+        }
+      }
+
+      // 更新用户私募统计
+      userPresaleStats = {
+        solAmount: totalSol,
+        tokenAmount: calculateTokens(totalSol)
+      };
+
+      renderApp();
+    } catch (error) {
+      console.error('Error fetching user presale stats:', error);
+    }
+  };
 
   const handleDonate = async () => {
     try {
@@ -287,21 +359,21 @@ function createApp() {
     }
   };
 
-  // Fetch referral statistics
+  // 获取推荐统计数据
   const fetchReferralStats = async () => {
-    if (!walletAddress) return;
+    if (!connection || !walletAddress) return;
     
     try {
-      // Get all signatures for the recipient address
+      // 获取所有转账到私募地址的交易
       const signatures = await connection.getSignaturesForAddress(
         new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
         { limit: 1000 }
       );
 
-      let total = 0;
-      const txs = [];
+      let totalAmount = 0;
+      const transactions = [];
 
-      // Process each transaction
+      // 处理每个交易
       for (const sig of signatures) {
         try {
           const tx = await connection.getTransaction(sig.signature, {
@@ -310,42 +382,37 @@ function createApp() {
 
           if (!tx || !tx.meta || tx.meta.err) continue;
 
-          // Look for memo instruction with referral
-          const memoInstr = tx.transaction.message.instructions.find(instr => 
+          // 获取交易的备注信息
+          const message = tx.transaction.message;
+          const memoInstr = message.instructions.find(instr => 
             instr.programId.toString() === 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
           );
 
           if (memoInstr) {
-            const memo = Buffer.from(memoInstr.data).toString();
-            console.log('Found memo:', memo);
-            console.log('Current wallet:', walletAddress);
-            if (memo.startsWith('ref:')) {
-              const refAddress = memo.slice(4);
-              console.log('Referral address:', refAddress);
-              if (refAddress === walletAddress) {
-                // Find the transfer instruction
-                const transferInstr = tx.transaction.message.instructions.find(instr =>
-                  instr.programId.toString() === '11111111111111111111111111111111'
-                );
+            const memoData = Buffer.from(memoInstr.data).toString();
+            // 检查是否包含当前用户的钱包地址作为推荐人
+            if (memoData.includes(walletAddress)) {
+              const transferInstr = message.instructions.find(instr =>
+                instr.programId.toString() === '11111111111111111111111111111111'
+              );
 
-                if (transferInstr) {
-                  // 获取转账金额
-                  const preBalances = tx.meta.preBalances;
-                  const postBalances = tx.meta.postBalances;
-                  const fromIndex = tx.transaction.message.accountKeys.findIndex(key => 
-                    key.toString() === tx.transaction.message.accountKeys[0].toString()
-                  );
-                  const amount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
-                  
-                  console.log('Transaction amount:', amount);
-                  total += amount;
-                  txs.push({
-                    signature: sig.signature,
-                    amount: amount,
-                    timestamp: sig.blockTime,
-                    from: tx.transaction.message.accountKeys[0].toString()
-                  });
-                }
+              if (transferInstr) {
+                // 计算转账金额
+                const preBalances = tx.meta.preBalances;
+                const postBalances = tx.meta.postBalances;
+                const fromIndex = message.accountKeys.findIndex(key => 
+                  key.toString() === message.accountKeys[0].toString()
+                );
+                const amount = (preBalances[fromIndex] - postBalances[fromIndex]) / solanaWeb3.LAMPORTS_PER_SOL;
+                
+                // 更新总量
+                totalAmount += amount;
+
+                transactions.push({
+                  signature: sig.signature,
+                  amount: amount,
+                  timestamp: tx.blockTime
+                });
               }
             }
           }
@@ -355,13 +422,21 @@ function createApp() {
         }
       }
 
-      const newStats = {
-        totalAmount: total,
-        transactions: txs.sort((a, b) => b.timestamp - a.timestamp)
+      // 更新统计数据
+      referralStats = {
+        totalAmount: totalAmount,
+        transactions: transactions.sort((a, b) => b.timestamp - a.timestamp)
       };
-      
-      console.log('Updated referral stats:', newStats);
-      saveReferralStats(newStats); // 保存到 localStorage
+
+      // 保存到 localStorage
+      if (isStorageAvailable()) {
+        try {
+          localStorage.setItem('referralStats', JSON.stringify(referralStats));
+        } catch (err) {
+          console.error('Error saving referral stats:', err);
+        }
+      }
+
       renderApp();
     } catch (error) {
       console.error('Error fetching referral stats:', error);
@@ -476,9 +551,10 @@ function createApp() {
     
     // Stats section
     const statsSection = createElement('div', { class: 'stats-section' });
-    const statsTitle = createElement('h4', { class: 'stats-title' }, 'Investment Statistics');
-    const statsValue = createElement('div', { class: 'stats-value' }, `Total Investment Through Your Link: ${referralStats.totalAmount.toFixed(2)} SOL`);
-    const statsNote = createElement('div', { class: 'stats-note' }, 'No investments through your link yet');
+    const statsTitle = createElement('h4', { class: 'stats-title' }, 'Private Sale Through Your Link');
+    const statsValue = createElement('div', { class: 'stats-value' }, `Total: ${referralStats.totalAmount.toFixed(2)} SOL`);
+    const statsTokenValue = createElement('div', { class: 'stats-token-value' }, `≈ ${(referralStats.totalAmount * 225000).toLocaleString()} TDOGE`);
+    const statsNote = createElement('div', { class: 'stats-note' }, referralStats.totalAmount > 0 ? '' : 'No private sale through your link yet');
     
     // Refresh button
     const refreshButton = createElement('button', {
@@ -487,9 +563,17 @@ function createApp() {
     }, '🔄 REFRESH STATS');
     
     // Append all elements
-    statsSection.append(statsTitle, statsValue, statsNote, refreshButton);
+    statsSection.append(statsTitle, statsValue, statsTokenValue, statsNote, refreshButton);
     referralContent.append(referralTitle, referralLink, copyButton, statsSection);
     referralSection.appendChild(referralContent);
+    
+    // Create user presale stats section
+    const userPresaleStatsSection = createElement('div', { class: 'user-presale-stats-section' });
+    const userPresaleStatsTitle = createElement('h4', { class: 'user-presale-stats-title' }, 'Your Private Sale Stats');
+    const userPresaleStatsValue = createElement('div', { class: 'user-presale-stats-value' }, `Your Private Sale Contribution: ${userPresaleStats.solAmount.toFixed(2)} SOL`);
+    const userPresaleStatsTokenValue = createElement('div', { class: 'user-presale-stats-token-value' }, `Your Private Sale Tokens: ${userPresaleStats.tokenAmount} TDOGE`);
+    userPresaleStatsSection.append(userPresaleStatsTitle, userPresaleStatsValue, userPresaleStatsTokenValue);
+    referralSection.appendChild(userPresaleStatsSection);
     
     container.appendChild(referralSection);
 
