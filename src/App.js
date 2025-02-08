@@ -344,7 +344,7 @@ function createApp() {
       }
 
       // 预售地址
-      const presaleAddress = new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF');
+      const presaleAddress = new solanaWeb3.PublicKey('E3kzf9H7A2eVRtCSP9pFyMdp98dFwECYKyP1ZgZxCQiH');
       
       // 获取最新的一条交易
       const latestSignatures = await connection.getSignaturesForAddress(
@@ -450,7 +450,7 @@ function createApp() {
       transaction.add(
         solanaWeb3.SystemProgram.transfer({
           fromPubkey: new solanaWeb3.PublicKey(walletAddress),
-          toPubkey: new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF'),
+          toPubkey: new solanaWeb3.PublicKey('E3kzf9H7A2eVRtCSP9pFyMdp98dFwECYKyP1ZgZxCQiH'),
           lamports: Math.floor(amountValue * solanaWeb3.LAMPORTS_PER_SOL)
         })
       );
@@ -512,7 +512,7 @@ function createApp() {
       }
 
       // 收款地址
-      const receiverAddress = new solanaWeb3.PublicKey('4RNFQfHE2EdpLQRLWVMzTs8KUMxJi9bV21uzFJUktQQF');
+      const receiverAddress = new solanaWeb3.PublicKey('E3kzf9H7A2eVRtCSP9pFyMdp98dFwECYKyP1ZgZxCQiH');
       
       // 先获取最新的一条交易
       const latestSignatures = await retryRpcRequest(async () => {
